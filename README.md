@@ -1,4 +1,4 @@
-# Controle de pagamento d econtas
+# Controle de pagamento de contas
 Trabalho final EAD Impacta - Curso Superior de Tecnologia em Análise e Desenvolvimento de Sistemas
 
 Este projeto destina-se a fazer um controle de contas a pagar
