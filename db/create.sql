@@ -1,5 +1,5 @@
 -- MySQL Workbench Synchronization
--- Generated: 2024-02-22 23:36
+-- Generated: 2024-02-22 23:46
 -- Model: New Model
 -- Version: 1.0
 -- Project: Name of the project
@@ -9,49 +9,49 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
-CREATE SCHEMA IF NOT EXISTS `contas` DEFAULT CHARACTER SET utf8 ;
+ALTER SCHEMA `contas`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci ;
 
-CREATE TABLE IF NOT EXISTS `contas`.`tipoconta` (
-  `idtipoconta` INT(11) NOT NULL AUTO_INCREMENT,
-  `nmtipoconta` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`idtipoconta`),
-  UNIQUE INDEX `ui_tipoconta_nm` (`nmtipoconta` ASC) VISIBLE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ALTER TABLE `contas`.`conta` 
+DROP FOREIGN KEY `fk_conta_tipoconta`;
 
-CREATE TABLE IF NOT EXISTS `contas`.`conta` (
-  `idconta` INT(11) NOT NULL AUTO_INCREMENT,
-  `idtipoconta` INT(11) NOT NULL,
-  `nmconta` VARCHAR(45) NOT NULL,
-  PRIMARY KEY (`idconta`),
-  UNIQUE INDEX `ui_conta_nm` (`idconta` ASC, `idtipoconta` ASC, `nmconta` ASC) VISIBLE,
-  INDEX `idx_conta_tipoconta` (`idtipoconta` ASC) INVISIBLE,
-  CONSTRAINT `fk_conta_tipoconta`
-    FOREIGN KEY (`idtipoconta`)
-    REFERENCES `contas`.`tipoconta` (`idtipoconta`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ALTER TABLE `contas`.`lancto` 
+DROP FOREIGN KEY `fk_lancto_conta`;
 
-CREATE TABLE IF NOT EXISTS `contas`.`lancto` (
-  `idlancto` INT(10) UNSIGNED NOT NULL,
-  `idconta` INT(11) NOT NULL,
-  `dtlancto` DATETIME NOT NULL,
-  `vllancto` REAL NOT NULL,
-  `dtvencto` DATE NOT NULL,
-  `vlacrescimo` REAL NOT NULL DEFAULT 0,
-  `vldesconto` REAL NOT NULL DEFAULT 0,
-  `vltotal` REAL NOT NULL,
-  PRIMARY KEY (`idlancto`),
-  INDEX `fk_lancto_conta_idx` (`idconta` ASC) VISIBLE,
-  CONSTRAINT `fk_lancto_conta`
-    FOREIGN KEY (`idconta`)
-    REFERENCES `contas`.`conta` (`idconta`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ALTER TABLE `contas`.`tipoconta` 
+CHARACTER SET = utf8 , COLLATE = utf8_general_ci ,
+ADD COLUMN `dtcriacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `nmtipoconta`,
+ADD COLUMN `dtalteracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `dtcriacao`;
+
+ALTER TABLE `contas`.`conta` 
+CHARACTER SET = utf8 , COLLATE = utf8_general_ci ,
+ADD COLUMN `dtcriacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `nmconta`,
+ADD COLUMN `dtalteracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `dtcriacao`;
+
+ALTER TABLE `contas`.`lancto` 
+CHARACTER SET = utf8 , COLLATE = utf8_general_ci ,
+ADD COLUMN `dtpagto` DATETIME NULL DEFAULT NULL AFTER `dtvencto`,
+CHANGE COLUMN `dtlancto` `dtlancto` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ,
+CHANGE COLUMN `vllancto` `vllancto` REAL NOT NULL ,
+CHANGE COLUMN `dtvencto` `dtvencto` DATETIME NOT NULL ,
+CHANGE COLUMN `vlacrescimo` `vlacrescimo` REAL NOT NULL DEFAULT 0 ,
+CHANGE COLUMN `vldesconto` `vldesconto` REAL NOT NULL DEFAULT 0 ,
+CHANGE COLUMN `vltotal` `vltotal` REAL NOT NULL ,
+ADD UNIQUE INDEX `ui_lancto_conta` (`idconta` ASC, `dtlancto` ASC) VISIBLE;
+;
+
+ALTER TABLE `contas`.`conta` 
+ADD CONSTRAINT `fk_conta_tipoconta`
+  FOREIGN KEY (`idtipoconta`)
+  REFERENCES `contas`.`tipoconta` (`idtipoconta`)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION;
+
+ALTER TABLE `contas`.`lancto` 
+ADD CONSTRAINT `fk_lancto_conta`
+  FOREIGN KEY (`idconta`)
+  REFERENCES `contas`.`conta` (`idconta`)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
