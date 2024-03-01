@@ -4,7 +4,7 @@
   "description": "API Contas-a-Pagar",
   "main": "app.js",
   "scripts": {
-    "start": "cls && node -r dotenv/config --experimental-modules app.js",
+    "start": "cls && nodemon -r dotenv/config --experimental-modules app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

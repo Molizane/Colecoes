@@ -1,14 +1,14 @@
 import express from 'express';
-import { insert, update, exclude, getById } from '../db/TipoConta.js';
+import { insert, update, exclude, getById } from '../db/Conta.js';
 
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
     try {
-        logger.info(`POST /tipoConta - ${req.body}`);
+        logger.info(`POST /conta - ${req.body}`);
         const result = await insert(req.body);
         res.send(result);
-        logger.info(`POST /tipoConta - ${JSON.stringify(result)}`);
+        logger.info(`POST /conta - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
     }
@@ -16,10 +16,10 @@ router.post('/', async (req, res, next) => {
 
 router.put('/', async (req, res, next) => {
     try {
-        logger.info(`PUT /tipoConta - ${req.body}`);
+        logger.info(`PUT /conta - ${req.body}`);
         const result = await update(req.body);
         res.send(result);
-        logger.info(`PUT /tipoConta - ${JSON.stringify(result)}`);
+        logger.info(`PUT /conta - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
     }
@@ -27,10 +27,10 @@ router.put('/', async (req, res, next) => {
 
 router.delete('/:id?', async (req, res, next) => {
     try {
-        logger.info(`DELETE /tipoConta/${req.params.id}`);
+        logger.info(`DELETE /conta/${req.params.id}`);
         const result = await exclude(req.params.id);
         res.send(result);
-        logger.info(`DELETE /tipoConta/${req.params.id} - ${JSON.stringify(result)}`);
+        logger.info(`DELETE /conta/${req.params.id} - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
     }
@@ -39,16 +39,15 @@ router.delete('/:id?', async (req, res, next) => {
 // :id é opcional
 router.get('/:id?', async (req, res, next) => {
     try {
-        console.log(req.params.id);
         const result = await getById(req.params.id);
         res.send(result);
 
         if (!isNaN(req.params.id)) {
-            logger.info(`GET /tipoConta/${req.params.id} `);
+            logger.info(`GET /conta/${req.params.id} `);
             return;
         }
 
-        logger.info('GET /tipoConta/');
+        logger.info('GET /conta/');
     } catch (err) {
         next(err);
     }

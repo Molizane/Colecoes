@@ -1,12 +1,12 @@
 import db from './db.js';
 
-export async function insert(tipoConta) {
-    if (!tipoConta) {
+export async function insert(conta) {
+    if (!conta) {
         return { status: -1, 'msg': 'Registro não informado' };
     }
 
     try {
-        await db.query('call InsertTipoConta(?)', [tipoConta.descricao]);
+        await db.query('call InsertConta(?,?)', [conta.idLancto, conta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
         console.log(err);
@@ -14,13 +14,13 @@ export async function insert(tipoConta) {
     }
 }
 
-export async function update(tipoConta) {
-    if (!tipoConta) {
+export async function update(conta) {
+    if (!conta) {
         return { status: -1, 'msg': 'Registro não informado' };
     }
 
     try {
-        await db.query('call UpdateTipoConta(?, ?)', [tipoConta.id, tipoConta.descricao]);
+        await db.query('call UpdateConta(?, ?, ?)', [conta.id, conta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
         return { status: err.sqlState, 'msg': err.sqlMessage };
@@ -35,7 +35,7 @@ export async function exclude(id) {
     }
 
     try {
-        await db.query('call DeleteTipoConta(?)', [id]);
+        await db.query('call DeleteConta(?)', [id]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
         return { status: err.sqlState, 'msg': err.sqlMessage };
@@ -51,7 +51,7 @@ export async function getById(id) {
         }
 
         try {
-            const [results, _] = await db.query('SELECT * FROM tipoconta WHERE Id=?', [id]);
+            const [results, _] = await db.query('SELECT * FROM conta WHERE Id=?', [id]);
             const result = results[0];
 
             return {
@@ -64,13 +64,12 @@ export async function getById(id) {
     }
 
     try {
-        const [results, _] = await db.query('SELECT t.*, (SELECT COUNT(1) FROM conta c WHERE c.IdTipoConta = t.Id) as qtde FROM tipoconta AS t ORDER BY t.Id');
+        const [results, _] = await db.query('SELECT * FROM conta ORDER BY Id');
 
         return results.map((result) => {
             return {
                 id: result.Id,
                 descricao: result.Descricao,
-                qtde: result.qtde,
             }
         });
     } catch (err) {

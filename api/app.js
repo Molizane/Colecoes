@@ -3,6 +3,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import winston from 'winston';
 import tipoContaRoutes from './routes/TipoContaRoutes.js';
+import contaRoutes from './routes/ContaRoutes.js';
+import lanctoRoutes from './routes/LanctoRoutes.js';
 
 const { combine, timestamp, label, printf } = winston.format;
 
@@ -24,15 +26,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.send('API em execu&ccedil;&atilde;o');
+  res.send('<h1>API em execu&ccedil;&atilde;o</h1>');
 });
 
 app.get('/status', (req, res) => {
-  const status = { 'Status': 'On' };
-  res.send(status);
+  res.send({ 'status': 'on' });
 });
 
-app.use('/tipoconta', tipoContaRoutes);
+app.use('/api/tipoconta', tipoContaRoutes);
+app.use('/api/conta', contaRoutes);
+app.use('/api/lancto', lanctoRoutes);
 
 const port = process.env.PORT || 9090;
 
