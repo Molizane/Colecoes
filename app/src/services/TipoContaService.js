@@ -1,23 +1,63 @@
 import http from './http-common';
 
 const create = async (data) => {
-  return await http.post('/tipoconta', data);
+  try {
+    return await http.post('/tipoconta', data);
+  } catch (ex) {
+    return {
+      data: {
+        message: ex.message
+      }
+    }
+  }
 };
 
 const update = async (id, data) => {
-  return await http.put(`/tipoconta/${id}`, data);
+  try {
+    return await http.put(`/tipoconta/${id}`, data);
+  } catch (ex) {
+    return {
+      data: {
+        message: ex.message
+      }
+    }
+  }
 };
 
 const remove = async (id) => {
-  return await http.delete(`/tipoconta/${id}`);
+  try {
+    return await http.delete(`/tipoconta/${id}`);
+  } catch (ex) {
+    return {
+      data: {
+        message: ex.message
+      }
+    }
+  }
 };
 
 const getAll = async () => {
-  return await http.get('/tipoconta');
+  try {
+    return await http.get('/tipoconta');
+  } catch (ex) {
+    return {
+      data: {
+        message: ex.message
+      }
+    }
+  }
 };
 
 const get = async (id) => {
-  return await http.get(`/tipoconta/${id}`);
+  try {
+    return await http.get(`/tipoconta/${id}`);
+  } catch (ex) {
+    return {
+      data: {
+        message: ex.message
+      }
+    }
+  }
 };
 
 const exportedObject = {
