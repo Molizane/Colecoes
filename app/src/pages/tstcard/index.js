@@ -4,16 +4,21 @@ import CenteredModal from '../../components/ModalDialog';
 
 const Home = () => {
   const [modalShow, setModalShow] = useState(false);
+  const [modalDelShow, setModalDelShow] = useState(false);
 
   const showModal = () => {
     setModalShow(true);
+  };
+
+  const showDelete = () => {
+    setModalDelShow(true);
   };
 
   return (
     <>
       <div className="row m-0">
         <div className='col-3'>
-          <Card id={1} qtde={0} descricao='Teste 1' bdColor='red' color='yellow' bgColor='blue' delColor='red' onEdit={() => showModal()} />
+          <Card id={1} qtde={0} descricao='Teste 1' bdColor='red' color='yellow' bgColor='blue' delColor='red' onEdit={() => showModal()} onDelete={() => showDelete(1)} />
         </div>
         <div className='col-3'>
           <Card id={2} qtde={4} descricao='Teste 2' editColor='red' />
@@ -35,12 +40,25 @@ const Home = () => {
       <CenteredModal
         titulo='Teste Modal'
         corTitulo='navy'
-        texto='Teste 1'
+        conteudo='Teste 1'
         corTexto='#515151'
         closeButton={true}
+        eye={true}
         show={modalShow}
-        onHide={() => setModalShow(false)}
-      />
+        onHide={() => setModalShow(false)} />
+
+      <CenteredModal
+        backdrop='static'
+        titulo='Atenção!'
+        corTitulo='#ff0000'
+        conteudo='Confirme a exclusão...'
+        corTexto='#515151'
+        closeButton={false}
+        thumbsUp={true}
+        cross={true}
+        show={modalDelShow}
+        onConfirm={() => setModalDelShow(false)}
+        onHide={() => setModalDelShow(false)} />
     </>
   )
 }
