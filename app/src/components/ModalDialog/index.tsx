@@ -1,18 +1,38 @@
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import { BsFillEyeSlashFill } from "react-icons/bs";
+import { BsHandThumbsUpFill } from "react-icons/bs";
+import { BsHandThumbsDownFill } from "react-icons/bs";
+import { BsFloppyFill } from "react-icons/bs";
+import { BsXCircleFill } from "react-icons/bs";
 
 interface CenteredModalProps {
+    backdrop?: true | false | 'static'
     titulo: string
     corTitulo?: string
-    texto: string;
+    conteudo: string;
     corTexto?: string;
     tamanho?: 'sm' | 'lg' | 'xl';
-    closeButton: boolean;
+    thumbsUp?: boolean;
+    thumbsDown?: boolean;
+    floppy?: boolean;
+    eye?: boolean;
+    closeButton?: boolean;
+    cross?: boolean;
     show: boolean;
-    onHide: () => void;
+    onConfirm?: () => void;
+    onHide?: () => void;
 }
 
-export default function CenteredModal({ titulo, corTitulo, texto, corTexto, tamanho, closeButton, show, onHide }: CenteredModalProps) {
+export default function CenteredModal({
+    backdrop,
+    titulo, corTitulo,
+    conteudo, corTexto,
+    tamanho,
+    closeButton,
+    thumbsUp, thumbsDown, floppy, eye, cross,
+    show,
+    onConfirm, onHide }: CenteredModalProps) {
     if (!corTitulo) {
         corTitulo = 'black';
     }
@@ -40,10 +60,14 @@ export default function CenteredModal({ titulo, corTitulo, texto, corTexto, tama
                 .corFundoTitulo {
                     background-color: yellow;
                 }
+                .modal-content {
+                    background-color: yellow !important;
+                }
                 `}
             </style>
 
             <Modal
+                backdrop={backdrop}
                 show={show}
                 onHide={onHide}
                 size={tamanho || 'sm'}
@@ -56,10 +80,29 @@ export default function CenteredModal({ titulo, corTitulo, texto, corTexto, tama
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <h5 className='corTexto'>{texto}</h5>
+                    <h5 className='corTexto'>{conteudo}</h5>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={onHide}>&times;</Button>
+                    {
+                        thumbsUp &&
+                        <Button variant="primary" onClick={onConfirm}><BsHandThumbsUpFill /></Button>
+                    }
+                    {
+                        floppy &&
+                        <Button variant="primary" onClick={onConfirm}><BsFloppyFill /></Button>
+                    }
+                    {
+                        thumbsDown &&
+                        <Button variant="secondary" onClick={onHide}><BsHandThumbsDownFill /></Button>
+                    }
+                    {
+                        eye &&
+                        <Button variant="secondary" onClick={onHide}><BsFillEyeSlashFill /></Button>
+                    }
+                    {
+                        cross &&
+                        <Button variant="secondary" onClick={onHide}><BsXCircleFill /></Button>
+                    }
                 </Modal.Footer>
             </Modal >
         </>
