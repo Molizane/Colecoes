@@ -20,10 +20,12 @@ const get = (id) => {
   return http.get(`/conta/${id}`);
 };
 
-export default {
+const exportedObject = {
   create,
   update,
   remove,
   getAll,
   get,
 };
+
+export default exportedObject;

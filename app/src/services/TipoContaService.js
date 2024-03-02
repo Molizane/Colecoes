@@ -20,10 +20,12 @@ const get = async (id) => {
   return await http.get(`/tipoconta/${id}`);
 };
 
-export default {
+const exportedObject = {
   create,
   update,
   remove,
   getAll,
   get,
 };
+
+export default exportedObject;
