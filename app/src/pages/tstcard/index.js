@@ -41,7 +41,7 @@ const Home = () => {
         titulo='Teste Modal'
         corTitulo='navy'
         conteudo='Teste 1'
-        corTexto='#515151'
+        corConteudo='#515151'
         closeButton={true}
         eye={true}
         show={modalShow}
@@ -52,10 +52,10 @@ const Home = () => {
         titulo='Atenção!'
         corTitulo='#ff0000'
         conteudo='Confirme a exclusão...'
-        corTexto='#515151'
+        corConteudo='#515151'
         closeButton={false}
         thumbsUp={true}
-        cross={true}
+        cancel={true}
         show={modalDelShow}
         onConfirm={() => setModalDelShow(false)}
         onHide={() => setModalDelShow(false)} />

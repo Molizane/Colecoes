@@ -34,11 +34,10 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
             border: '1px solid ' + (bdColor ?? '#eaeaea')
         }}>
             <div className={styles.dataContainer}>
-                <div className={styles.dataRow1}>
-                    <div><span></span></div>
-                </div>
                 <div className={styles.dataRow2}>
-                    {descricao}
+                    <span className={styles.descricao}>
+                        {descricao}
+                    </span>
                 </div>
             </div>
             <div className={styles.actions}>
@@ -50,7 +49,7 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
                     !qtde && onDelete &&
                     <div className={styles.action} >
                         <button type='button' onClick={onDeleteClick} className={`${styles.buttonOpt} 'btn'`} data-toggle='tooltip' data-placement='right' title='Excluir'>
-                            <MdDelete className={styles.action} style={{ color: delColor ?? 'inherited' }} />
+                            <MdDelete className={styles.action} style={{ color: delColor ?? 'inherited', fontSize: '1.3rem' }} />
                         </button>
                     </div>
                 }
@@ -62,7 +61,7 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
                     onEdit &&
                     <div>
                         <button type='button' onClick={onEditClick} className={`${styles.buttonOpt} 'btn'`} data-toggle='tooltip' data-placement='right' title='Editar'>
-                            <MdEdit className={styles.action} style={{ color: editColor ?? 'inherited' }} />
+                            <MdEdit className={styles.action} style={{ color: editColor ?? 'inherited', fontSize: '1.3rem' }} />
                         </button>
                     </div>
                 }

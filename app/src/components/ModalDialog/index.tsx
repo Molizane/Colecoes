@@ -5,20 +5,22 @@ import { BsHandThumbsUpFill } from "react-icons/bs";
 import { BsHandThumbsDownFill } from "react-icons/bs";
 import { BsFloppyFill } from "react-icons/bs";
 import { BsXCircleFill } from "react-icons/bs";
+import { AiOutlineClose } from "react-icons/ai";
 
 interface CenteredModalProps {
     backdrop?: true | false | 'static'
     titulo: string
     corTitulo?: string
+    children: any;
     conteudo: string;
-    corTexto?: string;
+    corConteudo?: string;
     tamanho?: 'sm' | 'lg' | 'xl';
     thumbsUp?: boolean;
     thumbsDown?: boolean;
     floppy?: boolean;
     eye?: boolean;
     closeButton?: boolean;
-    cross?: boolean;
+    cancel?: boolean;
     show: boolean;
     onConfirm?: () => void;
     onHide?: () => void;
@@ -27,10 +29,10 @@ interface CenteredModalProps {
 export default function CenteredModal({
     backdrop,
     titulo, corTitulo,
-    conteudo, corTexto,
+    children, conteudo, corConteudo: corTexto,
     tamanho,
     closeButton,
-    thumbsUp, thumbsDown, floppy, eye, cross,
+    thumbsUp, thumbsDown, floppy, eye, cancel,
     show,
     onConfirm, onHide }: CenteredModalProps) {
     if (!corTitulo) {
@@ -57,12 +59,6 @@ export default function CenteredModal({
                 .corTexto {
                     color: ${corTexto};
                 }
-                .corFundoTitulo {
-                    background-color: yellow;
-                }
-                .modal-content {
-                    background-color: yellow !important;
-                }
                 `}
             </style>
 
@@ -73,14 +69,14 @@ export default function CenteredModal({
                 size={tamanho || 'sm'}
                 aria-labelledby='contained-modal-title'
                 centered
-                classNames={{ overlay: { background: 'yellow' } }}>
+                className='warning'>
                 <Modal.Header closeButton={closeButton} className='corFundoTitulo'>
                     <Modal.Title id='contained-modal-title'>
                         <span className='corTitulo'>{titulo}</span>
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <h5 className='corTexto'>{conteudo}</h5>
+                    <span className='corTexto'>{children || conteudo}</span>
                 </Modal.Body>
                 <Modal.Footer>
                     {
@@ -100,8 +96,8 @@ export default function CenteredModal({
                         <Button variant="secondary" onClick={onHide}><BsFillEyeSlashFill /></Button>
                     }
                     {
-                        cross &&
-                        <Button variant="secondary" onClick={onHide}><BsXCircleFill /></Button>
+                        cancel &&
+                        <Button variant="secondary" onClick={onHide}><AiOutlineClose /></Button>
                     }
                 </Modal.Footer>
             </Modal >

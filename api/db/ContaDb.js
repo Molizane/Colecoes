@@ -67,7 +67,7 @@ export async function getById(id) {
     }
 
     try {
-        const [results, _] = await db.query('SELECT * FROM conta ORDER BY Id');
+        const [results, _] = await db.query('SELECT t.*, (SELECT COUNT(1) FROM lancto c WHERE c.IdConta = t.Id) as qtde FROM conta AS t ORDER BY t.Descricao');
 
         return results.map((result) => {
             return {

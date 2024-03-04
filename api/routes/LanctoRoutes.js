@@ -1,5 +1,5 @@
 import express from 'express';
-import { insert, update, exclude, getById } from '../db/Lancto.js';
+import { insert, update, exclude, getById } from '../db/LanctoDb.js';
 
 const router = express.Router();
 
