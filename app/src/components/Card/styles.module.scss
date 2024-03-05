@@ -24,12 +24,24 @@
   height: 100%;
 }
 
-.buttonOpt {
-  background-color: transparent;
-  border: none;
+.actionsBtn {
+  margin-left: 16px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
 }
 
-.action {
+.buttonOpt {
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  z-index: 1;
   cursor: pointer;
 }
 
@@ -53,6 +65,7 @@
   align-items: baseline;
   justify-content: flex-start;
   max-width: 100%;
+  padding-right: 2px;
 }
 
 .descricao {

@@ -4,22 +4,25 @@ export function trataErrosApi(erro) {
     if (erro.response && erro.response.data && erro.response.data.msg) {
         return {
             data: {
-                message: erro.response.data.msg
+                id: -1,
+                msg: erro.response.data.msg
             }
         }
     }
 
-    if (erro.message) {
+    if (erro.msg) {
         return {
             data: {
-                message: erro.message
+                id: -1,
+                msg: erro.msg
             }
         }
     }
 
     return {
         data: {
-            message: 'Erro desconhecido'
+            id: -1,
+            msg: 'Erro desconhecido'
         }
     }
 }

@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
+import servicoConta from '../../services/ContaService';
 import servico from '../../services/TipoContaService';
 import styles from './styles.module.scss'
 import Card from '../../components/Card';
 import CenteredModal from '../../components/ModalDialog';
 import { FiPlus } from "react-icons/fi";
 
-export default function TipoConta() {
+export default function Conta() {
     const [isLoading, setIsLoading] = useState(true);
     const [refresh, setRefresh] = useState(false);
     const [status, setStatus] = useState('list');
 
-    const [tipos, setTipos] = useState(null);
+    const [contas, setContas] = useState([]);
     const [id, setId] = useState();
-    const [tipo, setTipo] = useState(null);
+    const [conta, setConta] = useState(null);
+    const [tipos, setTipos] = useState([]);
 
     const [messageShow, setMessageShow] = useState(false);
     const [modalShow, setModalShow] = useState(false);
@@ -28,34 +30,61 @@ export default function TipoConta() {
         setTitulo('Erro');
         setCorTitulo('red');
         setTexto(msg);
-        setTipos(null);
+        setContas(null);
         setMessageShow(true);
     }
 
-    const getAll = async () => {
+    const getAllTipos = async () => {
         const response = await servico.getAll();
-        setIsLoading(false);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg) {
+            errPopup(response.data.msg);
             return;
         }
 
-        setTipos(response.data);
+        if (response.data) {
+            const results = [];
+
+            response.data.forEach((value) => {
+                results.push({
+                    key: value.id,
+                    value: value.descricao,
+                });
+            });
+
+            setTipos([
+                { key: '', value: 'Selecione um Tipo de Conta' },
+                ...results
+            ])
+        }
+    };
+
+    const getAll = async () => {
+        const response = await servicoConta.getAll();
+
+        if (response.data.msg) {
+            errPopup(response.data.msg);
+            return;
+        }
+
+        setContas(response.data);
 
         if (filtro) {
             setFiltrados(response.data.filter((reg) => reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1));
             return;
         }
 
+        setIsLoading(false);
         setFiltrados(response.data);
     };
 
     useEffect(() => {
+        getAllTipos();
+
         //console.log('page_load');
         // Título da aba
-        // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Tipos de Contas`;
-        document.title = 'Tipos de Contas';
+        // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Contas`;
+        document.title = 'Contas';
     }, []);
 
     useEffect(() => {
@@ -63,37 +92,39 @@ export default function TipoConta() {
     }, [refresh]);
 
     const handleInputChange = (event) => {
-        //console.log(event.target);
         const { name, value } = event.target;
-        setTipo({ ...tipo, [name]: value });
+        setConta({ ...conta, [name]: value });
         setLenDescricao(value.length);
     };
 
+    const handleSelectChange = event => {
+        setConta({ ...conta, idTipoConta: event.target.value });
+    };
+
     const handleFilterChange = (event) => {
-        //console.log(event.target);
         var txt = event.target.value.trim();
         setFiltro(txt);
 
         if (txt) {
-            setFiltrados(tipos.filter((reg) => reg.descricao.toLowerCase().indexOf(txt.toLowerCase()) !== -1));
+            setFiltrados(contas.filter((reg) => reg.descricao.toLowerCase().indexOf(txt.toLowerCase()) !== -1));
             return;
         }
 
-        setFiltrados(tipos);
+        setFiltrados(contas);
     };
 
     const handleCreate = async function () {
         setStatus('create');
         setTitulo('Inclusão');
         setCorTitulo('blue');
-        setTipo({ id: null, descricao: '' });
+        setConta({ id: null, descricao: '', idTipoConta: '' });
         setLenDescricao(0);
         setModalShow(true);
     };
 
     const handleEdit = async function (id) {
-        const reg = tipos.find((r) => r.id == id);
-        setTipo(reg);
+        const reg = contas.find((r) => r.id == id);
+        setConta(reg);
         setStatus('edit');
         setTitulo('Alteração');
         setCorTitulo('blue');
@@ -128,15 +159,15 @@ export default function TipoConta() {
 
     const handleCancel = async function () {
         setModalShow(false);
-        setTipo(null);
+        setConta(null);
         setStatus('list');
     };
 
     const doCreate = async function () {
-        const response = await servico.create(tipo);
+        const response = await servicoConta.create(conta);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
@@ -145,11 +176,10 @@ export default function TipoConta() {
     };
 
     const doUpdate = async function () {
-        console.log(tipo);
-        const response = await servico.update(tipo);
+        const response = await servicoConta.update(conta);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
@@ -159,10 +189,10 @@ export default function TipoConta() {
 
     const doDelete = async function () {
         setModalShow(false);
-        const response = await servico.remove(id);
+        const response = await servicoConta.remove(id);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
@@ -175,7 +205,7 @@ export default function TipoConta() {
                 <div className='col-12'>
                     <div className={styles.titulo}>
                         <div className={styles.titulo2}>
-                            <span>Tipos de Contas</span>
+                            <span>Contas</span>
                             <button className={styles.btnInsert} onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
                         <input type='text' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
@@ -186,12 +216,12 @@ export default function TipoConta() {
             <div style={{ height: '75vh', overflowY: 'scroll' }}>
                 <div className='row row-cols-md-5 m-0'>
                     {
-                        !isLoading && filtrados && filtrados.map(tipo => (
-                            <div key={`tipo${tipo.id}`} className='p-2'>
+                        !isLoading && filtrados && filtrados.map(conta => (
+                            <div key={`conta${conta.id}`} className='p-2'>
                                 <Card
-                                    id={tipo.id}
-                                    qtde={tipo.qtde}
-                                    descricao={tipo.descricao}
+                                    id={conta.id}
+                                    qtde={conta.qtde}
+                                    descricao={conta.descricao}
                                     color='white'
                                     bgColor='#3f3f3f'
                                     delColor='white'
@@ -239,13 +269,13 @@ export default function TipoConta() {
                     (status === 'create' || status === 'edit') &&
                     <>
                         <div className='form-group'>
-                            <label htmlFor='descricao'>Descrição</label>
+                            <label htmlFor='descricao' className='control-label'>Descrição</label>
                             <input
                                 type='text'
                                 className='form-control'
                                 id='descricao'
                                 required
-                                value={tipo.descricao}
+                                value={conta.descricao}
                                 onChange={handleInputChange}
                                 name='descricao'
                                 maxLength={45}
@@ -254,6 +284,18 @@ export default function TipoConta() {
                         </div>
                         <div className={styles.divContador}>
                             <span className={styles.contador}>{lenDescricao}</span>
+                        </div>
+                        <div className='form-group'>
+                            <label htmlFor='tipo' className='control-label'>Tipo de Conta</label>
+                            <select className='form-control'
+                                value={conta.idTipoConta}
+                                onChange={handleSelectChange}>
+                                {tipos.map(tipo => {
+                                    const { key, value } = tipo;
+                                    return (<option key={key} value={key}>{value}</option>
+                                    );
+                                })}
+                            </select>
                         </div>
                     </>
                 }

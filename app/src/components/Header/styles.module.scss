@@ -7,11 +7,12 @@
 .headerContent {
     max-width: 1120px;
     height: 6rem;
-    margin: 0 auto; // centraliza
-    padding: 0 2rem;
+    // margin: 0 auto; // centraliza
+    padding: 0 1rem;
 
     display: flex;
     align-items: center;
+    justify-content: space-between;
 
     img {
         cursor: pointer;

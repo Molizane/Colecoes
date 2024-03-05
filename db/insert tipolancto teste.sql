@@ -1,3 +1,4 @@
+DELETE FROM `contas`.`tipoconta`;
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 1');
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 2');
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 3');
@@ -175,4 +176,4 @@ INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 174');
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 175');
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 176');
 INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 177');
-INSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 178');
+InsertContaINSERT INTO `contas`.`tipoconta` (`Descricao`) VALUES ('Teste 178');

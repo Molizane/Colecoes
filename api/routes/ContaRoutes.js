@@ -7,20 +7,47 @@ router.post('/', async (req, res, next) => {
     try {
         logger.info(`POST /conta - ${JSON.stringify(req.body)}`);
         const result = await insert(req.body);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`POST /conta - ${JSON.stringify(result)}`);
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
 
-router.put('/', async (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
     try {
         logger.info(`PUT /conta - ${JSON.stringify(req.body)}`);
         const result = await update(req.body);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`PUT /conta - ${JSON.stringify(result)}`);
     } catch (err) {
+        console.log('put error');
+        console.log(err);
+
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
@@ -29,9 +56,21 @@ router.delete('/:id?', async (req, res, next) => {
     try {
         logger.info(`DELETE /conta/${req.params.id}`);
         const result = await exclude(req.params.id);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`DELETE /conta/${req.params.id} - ${JSON.stringify(result)}`);
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
@@ -48,13 +87,18 @@ router.get('/:id?', async (req, res, next) => {
 
         const result = await getById(req.params.id);
 
-        if (result.msg) {
-            res.status(550).send(result);
+        if (result.status) {
+            res.status(500).send(result);
         }
         else {
             res.send(result);
         }
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });

@@ -1,4 +1,5 @@
-import { MdEdit, MdDelete } from "react-icons/md";
+import { FiEdit } from "react-icons/fi";
+import { FiTrash2 } from "react-icons/fi";
 import styles from "./styles.module.scss"
 
 interface CardProps {
@@ -9,12 +10,14 @@ interface CardProps {
     bgColor?: string;
     bdColor?: string;
     editColor?: string;
+    bgEditColor?: string;
     delColor?: string;
+    bgDelColor?: string;
     onEdit?: (id: number) => void;
     onDelete?: (id: number) => void;
 }
 
-export default function Card({ id, qtde, descricao, color, bgColor, bdColor, editColor, delColor, onEdit, onDelete }: CardProps) {
+export default function Card({ id, qtde, descricao, color, bgColor, bdColor, editColor, bgEditColor, delColor, bgDelColor, onEdit, onDelete }: CardProps) {
     const onEditClick = () => {
         if (onEdit) {
             onEdit(id);
@@ -30,8 +33,8 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
     return (
         <div className={styles.container} style={{
             color: color ?? 'inherited',
-            backgroundColor: bgColor ?? 'transparent',
-            border: '1px solid ' + (bdColor ?? '#eaeaea')
+            backgroundColor: bgColor ?? 'inherited',
+            border: '1px solid ' + (bdColor ?? 'inherited')
         }}>
             <div className={styles.dataContainer}>
                 <div className={styles.dataRow2}>
@@ -40,16 +43,16 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
                     </span>
                 </div>
             </div>
-            <div className={styles.actions}>
+            <div className={styles.actionsBtn}>
                 {
                     qtde > 0 &&
                     <div className={styles.qtde}><span>{qtde}</span></div>
                 }
                 {
                     !qtde && onDelete &&
-                    <div className={styles.action} >
-                        <button type='button' onClick={onDeleteClick} className={`${styles.buttonOpt} 'btn'`} data-toggle='tooltip' data-placement='right' title='Excluir'>
-                            <MdDelete className={styles.action} style={{ color: delColor ?? 'inherited', fontSize: '1.3rem' }} />
+                    <div >
+                        <button type='button' className={`${styles.buttonOpt}`} style={{ backgroundColor: bgDelColor ?? 'inherited' }} onClick={onDeleteClick} data-toggle='tooltip' data-placement='right' title='Excluir'>
+                            <FiTrash2 style={{ color: delColor ?? 'inherited', fontSize: '1.3rem' }} />
                         </button>
                     </div>
                 }
@@ -60,8 +63,8 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
                 {
                     onEdit &&
                     <div>
-                        <button type='button' onClick={onEditClick} className={`${styles.buttonOpt} 'btn'`} data-toggle='tooltip' data-placement='right' title='Editar'>
-                            <MdEdit className={styles.action} style={{ color: editColor ?? 'inherited', fontSize: '1.3rem' }} />
+                        <button type='button' className={`${styles.buttonOpt}`} style={{ backgroundColor: bgEditColor ?? 'inherited' }} onClick={onEditClick} data-toggle='tooltip' data-placement='right' title='Editar'>
+                            <FiEdit style={{ color: editColor ?? 'inherited', fontSize: '1.3rem' }} />
                         </button>
                     </div>
                 }

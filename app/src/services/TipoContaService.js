@@ -13,8 +13,6 @@ const update = async (data) => {
   try {
     return await http.put(`/tipoconta/${data.id}`, data);
   } catch (ex) {
-    console.log('ERRO');
-    console.log(ex);
     return trataErrosApi(ex);
   }
 };

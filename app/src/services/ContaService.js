@@ -1,23 +1,68 @@
 import http from './http-common';
 
-const create = (data) => {
-  return http.post('/conta', data);
+const create = async (data) => {
+  try {
+    return await http.post('/conta', data);
+  }
+  catch (ex) {
+    if (ex.response && ex.response.data && ex.response.data.msg) {
+      return ex.response;
+    }
+
+    return { data: { id: -1, msg: ex.message } };
+  }
 };
 
-const update = (id, data) => {
-  return http.put(`/conta/${id}`, data);
+const update = async (data) => {
+  try {
+    return await http.put(`/conta/${data.id}`, data);
+  }
+  catch (ex) {
+    if (ex.response && ex.response.data && ex.response.data.msg) {
+      return ex.response;
+    }
+
+    return { data: { id: -1, msg: ex.message } };
+  }
 };
 
-const remove = (id) => {
-  return http.delete(`/conta/${id}`);
+const remove = async (id) => {
+  try {
+    return await http.delete(`/conta/${id}`);
+  }
+  catch (ex) {
+    if (ex.response && ex.response.data && ex.response.data.msg) {
+      return ex.response;
+    }
+
+    return { data: { id: -1, msg: ex.message } };
+  }
 };
 
-const getAll = () => {
-  return http.get('/conta');
+const getAll = async () => {
+  try {
+    return await http.get('/conta');
+  }
+  catch (ex) {
+    if (ex.response && ex.response.data && ex.response.data.msg) {
+      return ex.response;
+    }
+
+    return { data: { id: -1, msg: ex.message } };
+  }
 };
 
-const get = (id) => {
-  return http.get(`/conta/${id}`);
+const get = async (id) => {
+  try {
+    return await http.get(`/conta/${id}`);
+  }
+  catch (ex) {
+    if (ex.response && ex.response.data && ex.response.data.msg) {
+      return ex.response;
+    }
+
+    return { data: { id: -1, msg: ex.message } };
+  }
 };
 
 const exportedObject = {

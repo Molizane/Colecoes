@@ -7,7 +7,14 @@ router.post('/', async (req, res, next) => {
     try {
         logger.info(`POST /tipoConta - ${JSON.stringify(req.body)}`);
         const result = await insert(req.body);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`POST /tipoConta - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
@@ -18,7 +25,14 @@ router.put('/:id', async (req, res, next) => {
     try {
         logger.info(`PUT /tipoConta - ${JSON.stringify(req.body)}`);
         const result = await update(req.body);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`PUT /tipoConta - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
@@ -29,7 +43,14 @@ router.delete('/:id?', async (req, res, next) => {
     try {
         logger.info(`DELETE /tipoConta/${req.params.id}`);
         const result = await exclude(req.params.id);
-        res.send(result);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+
         logger.info(`DELETE /tipoConta/${req.params.id} - ${JSON.stringify(result)}`);
     } catch (err) {
         next(err);
@@ -48,8 +69,8 @@ router.get('/:id?', async (req, res, next) => {
 
         const result = await getById(req.params.id);
 
-        if (result.msg) {
-            res.status(550).send(result);
+        if (result.status) {
+            res.status(500).send(result);
         }
         else {
             res.send(result);

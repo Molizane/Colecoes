@@ -6,10 +6,10 @@ export async function insert(conta) {
     }
 
     try {
-        await db.query('call InsertConta(?,?)', [conta.idLancto, conta.descricao]);
+        await db.query('call InsertConta(?,?)', [conta.idTipoConta, conta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`insert / Conta - ${err.sqlMessage}`);
+        logger.info(`insert /Conta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -20,10 +20,10 @@ export async function update(conta) {
     }
 
     try {
-        await db.query('call UpdateConta(?, ?, ?)', [conta.id, conta.descricao]);
+        await db.query('call UpdateConta(?, ?)', [conta.id, conta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`update / Conta - ${err.sqlMessage}`);
+        logger.info(`update /Conta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -39,7 +39,7 @@ export async function exclude(id) {
         await db.query('call DeleteConta(?)', [id]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`exclude / Conta / ${id} - ${err.sqlMessage}`);
+        logger.info(`exclude /Conta/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -59,9 +59,10 @@ export async function getById(id) {
             return {
                 id: result.Id,
                 descricao: result.Descricao,
+                idTipoConta: result.IdTipoConta,
             }
         } catch (err) {
-            logger.info(`get / Conta / ${id} - ${err.sqlMessage}`);
+            logger.info(`get /Conta/${id} - ${err.sqlMessage}`);
             return { status: err.sqlState, 'msg': err.sqlMessage };
         }
     }
@@ -73,10 +74,12 @@ export async function getById(id) {
             return {
                 id: result.Id,
                 descricao: result.Descricao,
+                idTipoConta: result.IdTipoConta,
+                qtde: result.qtde,
             }
         });
     } catch (err) {
-        logger.info(`get / Conta - ${err.sqlMessage}`);
+        logger.info(`get /Conta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
