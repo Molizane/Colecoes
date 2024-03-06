@@ -35,8 +35,7 @@ const getAll = async () => {
 
 const get = async (id) => {
   try {
-    const result = await http.get(`/tipoconta/${id}`);
-    return result;
+    return await http.get(`/tipoconta/${id}`);
   } catch (ex) {
     return trataErrosApi(ex);
   }
