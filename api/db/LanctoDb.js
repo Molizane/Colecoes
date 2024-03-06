@@ -9,7 +9,7 @@ export async function insert(lancto) {
         await db.query('call InsertLancto(?)', [lancto.id, lancto.descricao, lancto.vlLancto, lancto.dtVencto]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`insert / Lancto - ${err.sqlMessage}`);
+        logger.info(`insert /Lancto - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -23,7 +23,7 @@ export async function update(lancto) {
         await db.query('call UpdateLancto(?, ?, ?, ?)', [lancto.id, lancto.descricao, lancto.vlLancto, lancto.dtVencto]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`update / Lancto - ${err.sqlMessage}`);
+        logger.info(`update /Lancto - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -39,7 +39,7 @@ export async function exclude(id) {
         await db.query('call DeleteLancto(?)', [id]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`exclude / Lancto / ${id} - ${err.sqlMessage}`);
+        logger.info(`exclude /Lancto/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -61,7 +61,7 @@ export async function getById(id) {
                 descricao: result.Descricao,
             }
         } catch (err) {
-            logger.info(`get / Lancto / ${id} - ${err.sqlMessage}`);
+            logger.info(`get /Lancto/${id} - ${err.sqlMessage}`);
             return { status: err.sqlState, 'msg': err.sqlMessage };
         }
     }
@@ -76,7 +76,7 @@ export async function getById(id) {
             }
         });
     } catch (err) {
-        logger.info(`get / Lancto - ${err.sqlMessage}`);
+        logger.info(`get /Lancto - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -98,7 +98,7 @@ export async function getByIdTipoConta(id) {
             }
         });
     } catch (err) {
-        logger.info(`get / Lancto / Tipo: ${id} - ${err.sqlMessage}`);
+        logger.info(`get /Lancto/Tipo/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -112,7 +112,7 @@ export async function close(lancto) {
         await db.query('call CloseLancto(?,?,?,?)', [lancto.id, lancto.dtPagto, lancto.vlAcrescimo, lancto.vlDesconto]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`close / Lancto / ${lancto.id} - ${err.sqlMessage}`);
+        logger.info(`close /Lancto/${lancto.id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -128,7 +128,7 @@ export async function reopen(id) {
         await db.query('call ReopenLancto(?)', [Id]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`reopen / Lancto / ${id} - ${err.sqlMessage}`);
+        logger.info(`reopen /Lancto/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }

@@ -9,7 +9,7 @@ export async function insert(tipoConta) {
         await db.query('call InsertTipoConta(?)', [tipoConta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`insert / TipoConta - ${err.sqlMessage}`);
+        logger.info(`insert /TipoConta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -23,7 +23,7 @@ export async function update(tipoConta) {
         await db.query('call UpdateTipoConta(?, ?)', [tipoConta.id, tipoConta.descricao]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`update / TipoConta - ${err.sqlMessage}`);
+        logger.info(`update /TipoConta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -39,7 +39,7 @@ export async function exclude(id) {
         await db.query('call DeleteTipoConta(?)', [id]);
         return { status: 0, 'msg': 'ok' };
     } catch (err) {
-        logger.info(`exclude / TipoConta / ${id} - ${err.sqlMessage}`);
+        logger.info(`exclude /TipoConta/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
@@ -61,7 +61,7 @@ export async function getById(id) {
                 descricao: result.Descricao,
             }
         } catch (err) {
-            logger.info(`get / TipoConta / ${id} - ${err.sqlMessage}`);
+            logger.info(`get /TipoConta/${id} - ${err.sqlMessage}`);
             return { status: err.sqlState, 'msg': err.sqlMessage };
         }
     }
@@ -77,7 +77,7 @@ export async function getById(id) {
             }
         });
     } catch (err) {
-        logger.info(`get / TipoConta - ${err.sqlMessage}`);
+        logger.info(`get /TipoConta - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }
