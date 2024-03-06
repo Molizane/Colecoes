@@ -18,22 +18,22 @@ const Home = () => {
     <>
       <div className="row m-0">
         <div className='col-3'>
-          <Card id={1} qtde={0} descricao='Teste 1' bdColor='red' color='yellow' bgColor='blue' delColor='red' onEdit={() => showModal()} onDelete={() => showDelete(1)} />
+          <Card id={1} qtde={0} linha1='Teste 1' bdColor='red' color='yellow' bgColor='blue' delColor='red' onEdit={() => showModal()} onDelete={() => showDelete(1)} />
         </div>
         <div className='col-3'>
-          <Card id={2} qtde={4} descricao='Teste 2' editColor='red' />
+          <Card id={2} qtde={4} linha1='Teste 2' editColor='red' />
         </div>
         <div className='col-3'>
-          <Card id={3} qtde={6} descricao='Teste 3' />
+          <Card id={3} qtde={6} linha1='Teste 3' />
         </div >
         <div className='col-3'>
-          <Card id={4} qtde={8} descricao='Teste 4' />
+          <Card id={4} qtde={8} linha1='Teste 4' />
         </div >
         <div className='col-3'>
-          <Card id={5} qtde={10} descricao='Teste 5' />
+          <Card id={5} qtde={10} linha1='Teste 5' />
         </div >
         <div className='col-3'>
-          <Card id={6} qtde={12} descricao='Teste 6' />
+          <Card id={6} qtde={12} linha1='Teste 6' />
         </div >
       </div>
 

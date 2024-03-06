@@ -5,7 +5,9 @@ import styles from "./styles.module.scss"
 interface CardProps {
     id: number;
     qtde: number;
-    descricao: string;
+    titulo1?: string;
+    linha1?: string;
+    linha2: string;
     color?: string;
     bgColor?: string;
     bdColor?: string;
@@ -17,7 +19,7 @@ interface CardProps {
     onDelete?: (id: number) => void;
 }
 
-export default function Card({ id, qtde, descricao, color, bgColor, bdColor, editColor, bgEditColor, delColor, bgDelColor, onEdit, onDelete }: CardProps) {
+export default function Card({ id, qtde, titulo1, linha1, linha2, color, bgColor, bdColor, editColor, bgEditColor, delColor, bgDelColor, onEdit, onDelete }: CardProps) {
     const onEditClick = () => {
         if (onEdit) {
             onEdit(id);
@@ -38,9 +40,19 @@ export default function Card({ id, qtde, descricao, color, bgColor, bdColor, edi
         }}>
             <div className={styles.dataContainer}>
                 <div className={styles.dataRow2}>
-                    <span className={styles.descricao}>
-                        {descricao}
-                    </span>
+                    {
+                        linha1 && false &&
+                        <div className={styles.linha1}>
+                            <span className={styles.descricao}>
+                                {linha1}
+                            </span>
+                        </div>
+                    }
+                    <div>
+                        <span className={styles.descricao}>
+                            {linha2}
+                        </span>
+                    </div>
                 </div>
             </div>
             <div className={styles.actionsBtn}>
