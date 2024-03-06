@@ -5,24 +5,33 @@ export function trataErrosApi(erro) {
         return {
             data: {
                 id: -1,
-                msg: erro.response.data.msg
+                msg: erro.response.data.msg,
             }
-        }
+        };
     }
 
     if (erro.msg) {
         return {
             data: {
                 id: -1,
-                msg: erro.msg
+                msg: erro.msg,
             }
-        }
+        };
+    }
+
+    if (erro.message) {
+        return {
+            data: {
+                id: -1,
+                msg: erro.message,
+            }
+        };
     }
 
     return {
         data: {
             id: -1,
-            msg: 'Erro desconhecido'
+            msg: 'Erro desconhecido',
         }
-    }
+    };
 }

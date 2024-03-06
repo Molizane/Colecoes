@@ -17,6 +17,11 @@ router.post('/', async (req, res, next) => {
 
         logger.info(`POST /tipoConta - ${JSON.stringify(result)}`);
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
@@ -35,6 +40,11 @@ router.put('/:id', async (req, res, next) => {
 
         logger.info(`PUT /tipoConta - ${JSON.stringify(result)}`);
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
@@ -53,6 +63,11 @@ router.delete('/:id?', async (req, res, next) => {
 
         logger.info(`DELETE /tipoConta/${req.params.id} - ${JSON.stringify(result)}`);
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
@@ -76,6 +91,11 @@ router.get('/:id?', async (req, res, next) => {
             res.send(result);
         }
     } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
         next(err);
     }
 });
