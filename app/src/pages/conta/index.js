@@ -15,12 +15,18 @@ export default function Conta() {
     const [id, setId] = useState();
     const [conta, setConta] = useState(null);
     const [tipos, setTipos] = useState([]);
+    const [tiposDistintos, setTiposDistintos] = useState([]);
 
+    // Popup mensagens
     const [messageShow, setMessageShow] = useState(false);
-    const [modalShow, setModalShow] = useState(false);
+    const [texto, setTexto] = useState('');
     const [titulo, setTitulo] = useState('');
     const [corTitulo, setCorTitulo] = useState('');
-    const [texto, setTexto] = useState('');
+
+    // Popup CRUD
+    const [modalCRUDShow, setModalCRUDShow] = useState(false);
+    const [tituloCRUD, setTituloCRUD] = useState('');
+    const [corTituloCRUD, setCorTituloCRUD] = useState('');
 
     const [lenDescricao, setLenDescricao] = useState(0);
     const [filtro, setFiltro] = useState('');
@@ -30,7 +36,6 @@ export default function Conta() {
         setTitulo('Erro');
         setCorTitulo('red');
         setTexto(msg);
-        setContas(null);
         setMessageShow(true);
     }
 
@@ -68,14 +73,19 @@ export default function Conta() {
         }
 
         setContas(response.data);
+        setIsLoading(false);
 
         if (filtro) {
-            setFiltrados(response.data.filter((reg) => reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1));
+            const filtrados = response.data.filter((reg) => reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1);
+            setFiltrados(filtrados);
+            const tiposDistintos = [...new Set(filtrados.map(item => item.tipoConta))];
+            setTiposDistintos(tiposDistintos);
             return;
         }
 
-        setIsLoading(false);
         setFiltrados(response.data);
+        const tiposDistintos = [...new Set(response.data.map(item => item.tipoConta))];
+        setTiposDistintos(tiposDistintos);
     };
 
     useEffect(() => {
@@ -106,38 +116,45 @@ export default function Conta() {
         setFiltro(txt);
 
         if (txt) {
-            setFiltrados(contas.filter((reg) => reg.descricao.toLowerCase().indexOf(txt.toLowerCase()) !== -1));
+            const filtrados = contas.filter((reg) => reg.descricao.toLowerCase().indexOf(txt.toLowerCase()) !== -1);
+            setFiltrados(filtrados);
+
+            const tiposDistintos = [...new Set(filtrados.map(item => item.tipoConta))];
+            setTiposDistintos(tiposDistintos);
             return;
         }
 
         setFiltrados(contas);
+
+        const tiposDistintos = [...new Set(contas.map(item => item.tipoConta))];
+        setTiposDistintos(tiposDistintos);
     };
 
     const handleCreate = async function () {
-        setStatus('create');
-        setTitulo('Inclusão');
-        setCorTitulo('blue');
         setConta({ id: null, descricao: '', idTipoConta: '' });
+        setStatus('create');
+        setTituloCRUD('Inclusão');
+        setCorTituloCRUD('blue');
         setLenDescricao(0);
-        setModalShow(true);
+        setModalCRUDShow(true);
     };
 
     const handleEdit = async function (id) {
         const reg = contas.find((r) => r.id == id);
         setConta(reg);
         setStatus('edit');
-        setTitulo('Alteração');
-        setCorTitulo('blue');
+        setTituloCRUD('Alteração');
+        setCorTituloCRUD('blue');
         setLenDescricao(reg.descricao.length);
-        setModalShow(true);
+        setModalCRUDShow(true);
     };
 
     const handleDelete = async function (id) {
         setId(id);
         setStatus('delete');
-        setTitulo('Atenção!');
-        setCorTitulo('#ff0000');
-        setModalShow(true);
+        setTituloCRUD('Atenção!');
+        setCorTituloCRUD('#ff0000');
+        setModalCRUDShow(true);
     };
 
     const doPopupAction = async function () {
@@ -158,7 +175,7 @@ export default function Conta() {
     };
 
     const handleCancel = async function () {
-        setModalShow(false);
+        setModalCRUDShow(false);
         setConta(null);
         setStatus('list');
     };
@@ -171,7 +188,7 @@ export default function Conta() {
             return;
         }
 
-        setModalShow(false);
+        setModalCRUDShow(false);
         setRefresh(!refresh);
     };
 
@@ -183,12 +200,12 @@ export default function Conta() {
             return;
         }
 
-        setModalShow(false);
+        setModalCRUDShow(false);
         setRefresh(!refresh);
     };
 
     const doDelete = async function () {
-        setModalShow(false);
+        setModalCRUDShow(false);
         const response = await servicoConta.remove(id);
 
         if (response.data.msg && response.data.msg !== 'ok') {
@@ -221,7 +238,9 @@ export default function Conta() {
                                 <Card
                                     id={conta.id}
                                     qtde={conta.qtde}
-                                    descricao={conta.descricao}
+                                    titulo1='Tipo'
+                                    linha1={`${conta.tipoConta}`}
+                                    linha2={conta.descricao}
                                     color='white'
                                     bgColor='#3f3f3f'
                                     delColor='white'
@@ -250,15 +269,15 @@ export default function Conta() {
             {/* Popup CRUD */}
             <CenteredModal
                 backdrop='static'
-                titulo={titulo}
-                corTitulo={corTitulo}
+                titulo={tituloCRUD}
+                corTitulo={corTituloCRUD}
                 corConteudo='white'
                 closeButton={false}
                 thumbsUp={status === 'delete'}
                 thumbsDown={status === 'delete'}
                 floppy={status !== 'delete'}
                 cancel={status !== 'delete'}
-                show={modalShow}
+                show={modalCRUDShow}
                 onConfirm={() => doPopupAction()}
                 onHide={() => handleCancel()} >
                 {
@@ -287,15 +306,27 @@ export default function Conta() {
                         </div>
                         <div className='form-group'>
                             <label htmlFor='tipo' className='control-label'>Tipo de Conta</label>
-                            <select className='form-control'
-                                value={conta.idTipoConta}
-                                onChange={handleSelectChange}>
-                                {tipos.map(tipo => {
-                                    const { key, value } = tipo;
-                                    return (<option key={key} value={key}>{value}</option>
-                                    );
-                                })}
-                            </select>
+                            {
+                                status === 'create' &&
+                                <select className='form-control'
+                                    value={conta.idTipoConta}
+                                    onChange={handleSelectChange}>
+                                    {tipos.map(tipo => {
+                                        const { key, value } = tipo;
+                                        return (<option key={key} value={key}>{value}</option>
+                                        );
+                                    })}
+                                </select>
+                            }
+                            {
+                                status === 'edit' &&
+                                <input
+                                    type='text'
+                                    className='form-control'
+                                    disabled
+                                    value={conta.tipoConta}
+                                    style={{ width: '100%' }} />
+                            }
                         </div>
                     </>
                 }

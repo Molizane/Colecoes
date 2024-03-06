@@ -14,11 +14,16 @@ export default function TipoConta() {
     const [id, setId] = useState();
     const [tipo, setTipo] = useState(null);
 
+    // Popup mensagens
     const [messageShow, setMessageShow] = useState(false);
-    const [modalShow, setModalShow] = useState(false);
+    const [texto, setTexto] = useState('');
     const [titulo, setTitulo] = useState('');
     const [corTitulo, setCorTitulo] = useState('');
-    const [texto, setTexto] = useState('');
+
+    // Popup CRUD
+    const [modalCRUDShow, setModalCRUDShow] = useState(false);
+    const [tituloCRUD, setTituloCRUD] = useState('');
+    const [corTituloCRUD, setCorTituloCRUD] = useState('');
 
     const [lenDescricao, setLenDescricao] = useState(0);
     const [filtro, setFiltro] = useState('');
@@ -28,13 +33,11 @@ export default function TipoConta() {
         setTitulo('Erro');
         setCorTitulo('red');
         setTexto(msg);
-        setTipos(null);
         setMessageShow(true);
     }
 
     const getAll = async () => {
         const response = await servico.getAll();
-        setIsLoading(false);
 
         if (response.data.message) {
             errPopup(response.data.message);
@@ -48,6 +51,7 @@ export default function TipoConta() {
             return;
         }
 
+        setIsLoading(false);
         setFiltrados(response.data);
     };
 
@@ -63,14 +67,12 @@ export default function TipoConta() {
     }, [refresh]);
 
     const handleInputChange = (event) => {
-        //console.log(event.target);
         const { name, value } = event.target;
         setTipo({ ...tipo, [name]: value });
         setLenDescricao(value.length);
     };
 
     const handleFilterChange = (event) => {
-        //console.log(event.target);
         var txt = event.target.value.trim();
         setFiltro(txt);
 
@@ -83,30 +85,30 @@ export default function TipoConta() {
     };
 
     const handleCreate = async function () {
-        setStatus('create');
-        setTitulo('Inclusão');
-        setCorTitulo('blue');
         setTipo({ id: null, descricao: '' });
+        setStatus('create');
+        setTituloCRUD('Inclusão');
+        setCorTituloCRUD('blue');
         setLenDescricao(0);
-        setModalShow(true);
+        setModalCRUDShow(true);
     };
 
     const handleEdit = async function (id) {
         const reg = tipos.find((r) => r.id == id);
         setTipo(reg);
         setStatus('edit');
-        setTitulo('Alteração');
-        setCorTitulo('blue');
+        setTituloCRUD('Alteração');
+        setCorTituloCRUD('blue');
         setLenDescricao(reg.descricao.length);
-        setModalShow(true);
+        setModalCRUDShow(true);
     };
 
     const handleDelete = async function (id) {
         setId(id);
         setStatus('delete');
-        setTitulo('Atenção!');
-        setCorTitulo('#ff0000');
-        setModalShow(true);
+        setTituloCRUD('Atenção!');
+        setCorTituloCRUD('#ff0000');
+        setModalCRUDShow(true);
     };
 
     const doPopupAction = async function () {
@@ -127,7 +129,7 @@ export default function TipoConta() {
     };
 
     const handleCancel = async function () {
-        setModalShow(false);
+        setModalCRUDShow(false);
         setTipo(null);
         setStatus('list');
     };
@@ -135,34 +137,33 @@ export default function TipoConta() {
     const doCreate = async function () {
         const response = await servico.create(tipo);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
-        setModalShow(false);
+        setModalCRUDShow(false);
         setRefresh(!refresh);
     };
 
     const doUpdate = async function () {
-        console.log(tipo);
         const response = await servico.update(tipo);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
-        setModalShow(false);
+        setModalCRUDShow(false);
         setRefresh(!refresh);
     };
 
     const doDelete = async function () {
-        setModalShow(false);
+        setModalCRUDShow(false);
         const response = await servico.remove(id);
 
-        if (response.data.message) {
-            errPopup(response.data.message);
+        if (response.data.msg && response.data.msg !== 'ok') {
+            errPopup(response.data.msg);
             return;
         }
 
@@ -191,7 +192,7 @@ export default function TipoConta() {
                                 <Card
                                     id={tipo.id}
                                     qtde={tipo.qtde}
-                                    descricao={tipo.descricao}
+                                    linha1={tipo.descricao}
                                     color='white'
                                     bgColor='#3f3f3f'
                                     delColor='white'
@@ -220,15 +221,15 @@ export default function TipoConta() {
             {/* Popup CRUD */}
             <CenteredModal
                 backdrop='static'
-                titulo={titulo}
-                corTitulo={corTitulo}
+                titulo={tituloCRUD}
+                corTitulo={corTituloCRUD}
                 corConteudo='white'
                 closeButton={false}
                 thumbsUp={status === 'delete'}
                 thumbsDown={status === 'delete'}
                 floppy={status !== 'delete'}
                 cancel={status !== 'delete'}
-                show={modalShow}
+                show={modalCRUDShow}
                 onConfirm={() => doPopupAction()}
                 onHide={() => handleCancel()} >
                 {
@@ -239,7 +240,7 @@ export default function TipoConta() {
                     (status === 'create' || status === 'edit') &&
                     <>
                         <div className='form-group'>
-                            <label htmlFor='descricao'>Descrição</label>
+                            <label htmlFor='descricao' className='control-label'>Descrição</label>
                             <input
                                 type='text'
                                 className='form-control'
