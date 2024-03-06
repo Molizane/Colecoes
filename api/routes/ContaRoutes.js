@@ -40,9 +40,6 @@ router.put('/:id', async (req, res, next) => {
 
         logger.info(`PUT /conta - ${JSON.stringify(result)}`);
     } catch (err) {
-        console.log('put error');
-        console.log(err);
-
         if (err.response && err.response.data && err.response.data.msg) {
             res.status(500).send(err.response.data);
             return;
