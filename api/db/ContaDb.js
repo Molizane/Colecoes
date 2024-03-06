@@ -68,13 +68,14 @@ export async function getById(id) {
     }
 
     try {
-        const [results, _] = await db.query('SELECT t.*, (SELECT COUNT(1) FROM lancto c WHERE c.IdConta = t.Id) as qtde FROM conta AS t ORDER BY t.Descricao');
+        const [results, _] = await db.query('SELECT t.*, c.Descricao AS TipoConta, (SELECT COUNT(1) FROM lancto c WHERE c.IdConta = t.Id) as qtde FROM conta AS t INNER JOIN tipoconta c ON c.Id = t.IdTipoConta ORDER BY c.Descricao, t.Descricao');
 
         return results.map((result) => {
             return {
                 id: result.Id,
                 descricao: result.Descricao,
                 idTipoConta: result.IdTipoConta,
+                tipoConta: result.TipoConta,
                 qtde: result.qtde,
             }
         });
