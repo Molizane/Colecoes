@@ -223,9 +223,9 @@ export default function Conta() {
                     <div className={styles.titulo}>
                         <div className={styles.titulo2}>
                             <span>Contas</span>
-                            <button className={styles.btnInsert} onClick={handleCreate}><FiPlus />Novo</button>
+                            <button className='btn-insert' onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
-                        <input type='text' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
+                        <input type='search' className={styles.search} placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
                     </div>
                     <hr />
                 </div>

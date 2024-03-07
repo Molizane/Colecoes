@@ -177,9 +177,9 @@ export default function TipoConta() {
                     <div className={styles.titulo}>
                         <div className={styles.titulo2}>
                             <span>Tipos de Contas</span>
-                            <button className={styles.btnInsert} onClick={handleCreate}><FiPlus />Novo</button>
+                            <button className='btn-insert' onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
-                        <input type='text' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
+                        <input type='search' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
                     </div>
                     <hr />
                 </div>
@@ -192,7 +192,7 @@ export default function TipoConta() {
                                 <Card
                                     id={tipo.id}
                                     qtde={tipo.qtde}
-                                    linha1={tipo.descricao}
+                                    linha2={tipo.descricao}
                                     color='white'
                                     bgColor='#3f3f3f'
                                     delColor='white'

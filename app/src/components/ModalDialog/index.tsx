@@ -22,6 +22,7 @@ interface CenteredModalProps {
     closeButton?: boolean;
     cancel?: boolean;
     show: boolean;
+    warning?: boolean;
     onConfirm?: () => void;
     onHide?: () => void;
 }
@@ -34,6 +35,7 @@ export default function CenteredModal({
     closeButton,
     thumbsUp, thumbsDown, floppy, eye, cancel,
     show,
+    warning,
     onConfirm, onHide }: CenteredModalProps) {
     if (!corTitulo) {
         corTitulo = 'black';
@@ -68,8 +70,7 @@ export default function CenteredModal({
                 onHide={onHide}
                 size={tamanho || 'sm'}
                 aria-labelledby='contained-modal-title'
-                centered
-                className='warning'>
+                centered>
                 <Modal.Header closeButton={closeButton} className='corFundoTitulo'>
                     <Modal.Title id='contained-modal-title'>
                         <span className='corTitulo'>{titulo}</span>

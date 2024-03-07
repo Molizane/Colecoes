@@ -6,9 +6,7 @@ export function Header() {
         <header className={styles.headerContainer}>
             <div className={styles.headerContent}>
                 <ActiveLink href="/" activeClassName={styles.active}>
-                    <a>
-                        <h2>Controle de Contas</h2>
-                    </a>
+                    <a><h2>Controle de Contas</h2></a>
                 </ActiveLink>
                 <nav>
                     <ActiveLink href="/tipoconta" activeClassName={styles.active}>
