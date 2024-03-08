@@ -140,6 +140,7 @@ export default function Conta() {
     };
 
     const handleEdit = async function (id) {
+        console.log(id);
         const reg = contas.find((r) => r.id == id);
         setConta(reg);
         setStatus('edit');
@@ -150,6 +151,7 @@ export default function Conta() {
     };
 
     const handleDelete = async function (id) {
+        console.log(id);
         setId(id);
         setStatus('delete');
         setTituloCRUD('Atenção!');
@@ -158,6 +160,8 @@ export default function Conta() {
     };
 
     const doPopupAction = async function () {
+        console.log(status);
+
         if (status === 'delete') {
             await doDelete();
             return;
@@ -231,24 +235,39 @@ export default function Conta() {
                 </div>
             </div>
             <div style={{ height: '75vh', overflowY: 'scroll' }}>
-                <div className='row row-cols-md-5 m-0'>
+                <div className='row m-0'>
                     {
-                        !isLoading && filtrados && filtrados.map(conta => (
-                            <div key={`conta${conta.id}`} className='p-2'>
-                                <Card
-                                    id={conta.id}
-                                    qtde={conta.qtde}
-                                    titulo1='Tipo'
-                                    linha1={`${conta.tipoConta}`}
-                                    linha2={conta.descricao}
-                                    color='white'
-                                    bgColor='#3f3f3f'
-                                    delColor='white'
-                                    bgDelColor='red'
-                                    editColor='white'
-                                    bgEditColor='green'
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete} />
+                        !isLoading && filtrados && tiposDistintos && tiposDistintos.map(tipo => (
+                            <div key={`${tipo}`}>
+                                <div className='col-12'>
+                                    <span>{tipo}</span>
+                                </div>
+                                <div className='col-12 p-0 mb-2'>
+                                    <div className='row row-cols-md-5 m-0'>
+                                        {
+                                            !isLoading && filtrados && filtrados
+                                                .filter(f => f.tipoConta === tipo)
+                                                .map(conta => (
+                                                    <div key={`${tipo}conta${conta.id}`} className='p-2'>
+                                                        <Card
+                                                            id={conta.id}
+                                                            qtde={conta.qtde}
+                                                            titulo1='Tipo'
+                                                            linha1={`${conta.tipoConta}`}
+                                                            linha2={conta.descricao}
+                                                            color='white'
+                                                            bgColor='#3f3f3f'
+                                                            delColor='white'
+                                                            bgDelColor='red'
+                                                            editColor='white'
+                                                            bgEditColor='green'
+                                                            onEdit={handleEdit}
+                                                            onDelete={handleDelete} />
+                                                    </div>
+                                                ))
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         ))
                     }
