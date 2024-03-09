@@ -10,7 +10,7 @@ Este projeto destina-se a fazer um controle de contas a pagar
 O sistema terá os seguintes cadastros:
 
 - Tipos de contas: contas de consumo, cartões de crédito, boletos, carnês, etc.
-- Contas: contas de consumo -> ENEL, boletos -> Netflix, etc.
+- Contas: contas de consumo: ENEL, boletos: Netflix, etc.
 - Movimentação:
   - Lançamento do débito
   - Pagamento do débito
