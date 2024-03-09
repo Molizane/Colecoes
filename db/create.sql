@@ -1,8 +1,6 @@
-CREATE DATABASE  IF NOT EXISTS `contas` /*!40100 DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_bin */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `contas`;
 -- MySQL dump 10.13  Distrib 8.0.32, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: contas
+-- Host: 127.0.0.1    Database: contas_dev
 -- ------------------------------------------------------
 -- Server version	8.0.32
 
@@ -27,15 +25,15 @@ DROP TABLE IF EXISTS `conta`;
 CREATE TABLE `conta` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `IdTipoConta` int NOT NULL,
-  `Descricao` varchar(45) NOT NULL,
+  `Descricao` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`),
-  CONSTRAINT `fk_conta_tipoconta` FOREIGN KEY (`IdTipoConta`) REFERENCES `tipoconta` (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+  CONSTRAINT `fk_conta_tipoconta` FOREIGN KEY (`IdTipoConta`) REFERENCES `tipoconta` (`Id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=642 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -49,7 +47,7 @@ CREATE TABLE `lancto` (
   `Id` int unsigned NOT NULL,
   `IdConta` int NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `Descricao` varchar(100) COLLATE utf8mb3_bin NOT NULL,
+  `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `VlLancto` double NOT NULL,
   `VlAcrescimo` double NOT NULL DEFAULT '0',
   `VlDesconto` double NOT NULL DEFAULT '0',
@@ -61,7 +59,7 @@ CREATE TABLE `lancto` (
   UNIQUE KEY `ui_lancto_conta` (`IdConta`,`DtLancto`),
   KEY `fk_lancto_conta_idx` (`IdConta`),
   CONSTRAINT `fk_lancto_conta` FOREIGN KEY (`IdConta`) REFERENCES `conta` (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -73,13 +71,469 @@ DROP TABLE IF EXISTS `tipoconta`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tipoconta` (
   `Id` int NOT NULL AUTO_INCREMENT,
-  `Descricao` varchar(45) CHARACTER SET utf8mb3 NOT NULL,
+  `Descricao` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=1082 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping events for database 'contas_dev'
+--
+
+--
+-- Dumping routines for database 'contas_dev'
+--
+/*!50003 DROP PROCEDURE IF EXISTS `CloseLancto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `CloseLancto`(
+  IN p_Id INT,
+  IN p_DtPagto DATETIME,
+  IN p_VlAcrescimo DOUBLE,
+  IN p_VlDesconto DOUBLE
+)
+BEGIN
+  IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Lançamento não existe';
+  END IF;
+
+  IF p_VlAcrescimo < 0 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Valor do acréscimo inválido';
+  END IF;
+
+  IF p_VlDesconto < 0 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Valor do desconto inválido';
+  END IF;
+
+  UPDATE `lancto`
+  SET `DtPagto` = p_DtPagto,
+      `VlAcrescimo` = p_VlAcrescimo,
+      `VlDesconto` = p_VlDesconto,
+      `FlPago` = 1,
+      `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteConta`(
+  IN p_Id INT
+)
+BEGIN
+  DECLARE EXIT HANDLER FOR SQLSTATE '42000'
+    SELECT 'Conta não pode ser excluída.';
+
+  IF EXISTS (SELECT 1 FROM `lancto` WHERE `IdConta` = p_Id) THEN
+    CALL raise_error;
+  END IF;
+
+  DELETE FROM `conta`
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteLancto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteLancto`(
+  IN p_Id INT
+)
+BEGIN
+  DELETE FROM `lancto`
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteTipoConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteTipoConta`(
+  IN p_Id INT
+)
+BEGIN
+  IF p_Id IS NULL THEN
+    SIGNAL SQLSTATE '42100'
+    SET MESSAGE_TEXT = 'Id não informado.';
+  END IF;
+
+  IF NOT (SELECT 1 FROM `TipoConta` WHERE `Id` = p_Id) THEN
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = 'Registro não existe.';
+  END IF;
+
+  IF (SELECT 1 FROM `conta` WHERE `IdTipoConta` = p_Id) THEN
+    SIGNAL SQLSTATE '42003'
+    SET MESSAGE_TEXT = 'Registro não pode ser excluído.';
+  END IF;
+
+  DELETE FROM `TipoConta`
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FillContas` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb3 */ ;
+/*!50003 SET character_set_results = utf8mb3 */ ;
+/*!50003 SET collation_connection  = utf8mb3_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `FillContas`()
+BEGIN
+  SET @min_tipo = 0;
+  SET @max_tipo = 0;
+  SET @idConta = 1;
+  SET @vezes = 0;
+  
+  SELECT MIN(Id), MAX(Id)
+  INTO @min_tipo, @max_tipo
+  FROM `tipoconta`;
+  
+  DELETE FROM `conta`
+  WHERE Id NOT IN (SELECT DISTINCT IdConta from `lancto`);
+  
+  WHILE @vezes <= 150 DO 
+    SET @idTipo = FLOOR(RAND() * (@max_tipo - @min_tipo) + @min_Tipo);
+    SET @contas = 0;
+    SET @max_conta = FLOOR(RAND() * 15 + 1);
+    
+    loop2: LOOP
+      SET @descricao = CONCAT('Conta ', CONVERT(@idConta, CHAR(45)));
+      
+      IF NOT EXISTS(SELECT 1 FROM `conta` WHERE Descricao = @descricao) THEN
+        INSERT INTO `conta` (`IdTipoConta`, `Descricao`) VALUES (@idTipo, @descricao);
+      
+        SET @contas = @contas + 1;
+        SET @vezes = @vezes + 1;
+      
+        IF @contas >= @max_conta THEN
+          LEAVE loop2;
+        END IF;
+      END IF;
+  
+      SET @idConta = @idConta + 1;
+    END LOOP loop2;
+  END WHILE;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertConta`(
+  IN p_IdTipoConta INT,
+  IN p_Descricao VARCHAR(45)
+)
+BEGIN
+  IF NOT (SELECT 1 FROM `TipoConta` WHERE `Id` = p_IdTipoConta) THEN
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = 'Tipo de Conta não existe.';
+  END IF;
+
+  IF (SELECT 1 FROM `conta` WHERE `IdTipoConta` = p_IdTipoConta AND `Descricao` = TRIM(p_Descricao)) THEN
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = 'Conta já existe para esse Tipo de Conta.';
+  END IF;
+
+  INSERT INTO `conta` (`IdTipoConta`, `Descricao`)
+  VALUES (p_IdTipoConta, TRIM(p_Descricao));
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertLancto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
+  IN p_IdConta INT,
+  IN p_Descricao VARCHAR(100),
+  IN p_VlLancto DOUBLE,
+  IN p_DtVencto DATETIME
+)
+BEGIN
+  DECLARE Cnt INT;
+
+  SELECT COUNT(1) INTO Cnt FROM `Conta` WHERE `IdConta` = p_IdConta;
+
+  IF Cnt = 0 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Conta não existe';
+  END IF;
+
+  IF p_Descricao IS NULL OR TRIM(p_Descricao) = '' THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Descrição não informada';
+  END IF;
+
+  IF p_VlLancto <= 0 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Valor do Lançamento inválido';
+  END IF;
+
+  INSERT INTO `lancto` (`IdConta`, `Descricao`, `VlLancto`, `DtVencto`)
+  VALUES (p_IdConta, p_Descricao, p_VlLancto, p_DtVencto);
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertTipoConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertTipoConta`(
+  IN p_Descricao VARCHAR(45)
+)
+BEGIN
+  IF p_Descricao IS NULL OR TRIM(p_Descricao) = '' THEN
+    SIGNAL SQLSTATE '42101'
+    SET MESSAGE_TEXT = 'Descrição não informada.';
+  END IF;
+
+  IF (SELECT 1 FROM `TipoConta` WHERE `Descricao` = TRIM(p_Descricao)) THEN
+    SIGNAL SQLSTATE '42001'
+    SET MESSAGE_TEXT = 'Já existe.';
+  END IF;
+
+  INSERT INTO `TipoConta` (`Descricao`) VALUES (TRIM(p_Descricao));
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `ReopenLancto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `ReopenLancto`(
+  IN p_Id INT
+)
+BEGIN
+  IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Lançamento não existe';
+  END IF;
+
+  IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id AND FlPago = 1) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Lançamento não está fechado';
+  END IF;
+
+  UPDATE `lancto`
+  SET `FlPago` = 0,
+      `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `UpdateConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateConta`(
+  IN p_Id INT,
+  IN p_Descricao VARCHAR(45)
+)
+BEGIN
+  DECLARE v_IdTipoConta INT;
+
+  SELECT `IdTipoConta` INTO v_IdTipoConta
+  FROM `conta`
+  WHERE Id = p_Id;
+
+  IF EXISTS (SELECT 1 FROM `conta` WHERE `IdTipoConta` = v_IdTipoConta AND `Id` <> p_Id AND `Descricao` = TRIM(p_Descricao)) THEN
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = 'Conta já existe.';
+  END IF;
+
+  UPDATE conta
+  SET Descricao = p_Descricao,
+      DtAlteracao = CURRENT_TIMESTAMP
+  WHERE Id = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `UpdateLancto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
+  IN p_Id INT,
+  IN p_Descricao VARCHAR(100),
+  IN p_DtVencto DATETIME,
+  IN p_VlLancto DOUBLE
+)
+BEGIN
+  DECLARE v_FlPago INT;
+
+  SELECT FlPago INTO v_FlPago
+  FROM `lancto`
+  WHERE Id = p_Id;
+
+  IF v_FlPago = 1 THEN
+    SIGNAL SQLSTATE '42003'
+    SET MESSAGE_TEXT = 'Lançamento já fechado.';
+  END IF;
+
+  UPDATE `lancto`
+  SET `Descricao` = p_Descricao,
+      `VlLancto` = p_VlLancto,
+      `DtVencto` = p_DtVencto,
+      `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `UpdateTipoConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateTipoConta`(
+  IN p_Id INT,
+  IN p_Descricao VARCHAR(45)
+)
+BEGIN
+  IF p_Id IS NULL THEN
+    SIGNAL SQLSTATE '42100'
+    SET MESSAGE_TEXT = 'Id não informado.';
+  END IF;
+
+  IF p_Descricao IS NULL OR TRIM(p_Descricao) = '' THEN
+    SIGNAL SQLSTATE '42101'
+    SET MESSAGE_TEXT = 'Descrição não informada.';
+  END IF;
+
+  IF (SELECT 1 FROM `TipoConta` WHERE `Id` <> p_Id AND `Descricao` = TRIM(p_Descricao)) THEN
+    SIGNAL SQLSTATE '42001'
+    SET MESSAGE_TEXT = 'Já existe.';
+  END IF;
+
+  IF NOT (SELECT 1 FROM `TipoConta` WHERE `Id` = p_Id) THEN
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = 'Não existe.';
+  END IF;
+
+  UPDATE `TipoConta`
+  SET `Descricao` = TRIM(p_Descricao),
+      `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -90,4 +544,4 @@ CREATE TABLE `tipoconta` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-02-29 19:56:04
+-- Dump completed on 2024-03-09 13:00:01
