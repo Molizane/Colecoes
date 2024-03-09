@@ -62,3 +62,7 @@ input[type=search] {
 .modal-content.warninng {
   background: red !important;
 }
+
+.hint:hover {
+  filter: brightness(80%);
+}

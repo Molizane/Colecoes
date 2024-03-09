@@ -39,3 +39,27 @@
 .contador {
     font-size: 0.8rem;
 }
+
+.cardContainer {
+    border-bottom: 1px solid rgb(58, 58, 79);
+    border-left: 1px solid rgb(58, 58, 79);
+    border-right: 1px solid rgb(58, 58, 79);
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+    border-radius: 0 0 10px 10px;
+    background-color: #f1f2eb;
+}
+
+.grupoTitulo {
+    border-top: 1px solid rgb(58, 58, 79);
+    border-left: 1px solid rgb(58, 58, 79);
+    border-right: 1px solid rgb(58, 58, 79);
+    border-radius: 10px 10px 0 0;
+    padding: 5px 0 0 15px;
+    background-color: #f1f2eb;
+}
+
+.grupoTexto {
+    color: #3a3636;
+    font-size: 1.2rem;
+}

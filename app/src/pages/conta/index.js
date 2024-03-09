@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import servicoConta from '../../services/ContaService';
-import servico from '../../services/TipoContaService';
-import styles from './styles.module.scss'
+import { FiPlus } from "react-icons/fi";
+
 import Card from '../../components/Card';
 import CenteredModal from '../../components/ModalDialog';
-import { FiPlus } from "react-icons/fi";
+
+import servicoConta from '../../services/ContaService';
+import servico from '../../services/TipoContaService';
+
+import styles from './styles.module.scss'
 
 export default function Conta() {
     const [isLoading, setIsLoading] = useState(true);
@@ -238,11 +241,11 @@ export default function Conta() {
                 <div className='row m-0'>
                     {
                         !isLoading && filtrados && tiposDistintos && tiposDistintos.map(tipo => (
-                            <div key={`${tipo}`}>
-                                <div className='col-12'>
-                                    <span>{tipo}</span>
+                            <div key={`${tipo}`} className={styles.grupoConta}>
+                                <div className={`col-12 ${styles.grupoTitulo}`}>
+                                    <span className={styles.grupoTexto}>{tipo}</span>
                                 </div>
-                                <div className='col-12 p-0 mb-2'>
+                                <div className={`col-12 p-0 m-0 ${styles.cardContainer}`} >
                                     <div className='row row-cols-md-5 m-0'>
                                         {
                                             !isLoading && filtrados && filtrados
