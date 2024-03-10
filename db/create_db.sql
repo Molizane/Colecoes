@@ -33,7 +33,7 @@ CREATE TABLE `conta` (
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`),
   CONSTRAINT `fk_conta_tipoconta` FOREIGN KEY (`IdTipoConta`) REFERENCES `tipoconta` (`Id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=642 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=800 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,7 +76,7 @@ CREATE TABLE `tipoconta` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=1082 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=2784 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -223,11 +223,11 @@ DELIMITER ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb3 */ ;
-/*!50003 SET character_set_results = utf8mb3 */ ;
-/*!50003 SET collation_connection  = utf8mb3_general_ci */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'NO_AUTO_VALUE_ON_ZERO' */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `FillContas`()
 BEGIN
@@ -244,15 +244,15 @@ BEGIN
   WHERE Id NOT IN (SELECT DISTINCT IdConta from `lancto`);
   
   WHILE @vezes <= 150 DO 
-    SET @idTipo = FLOOR(RAND() * (@max_tipo - @min_tipo) + @min_Tipo);
+    SET @idTipoConta = FLOOR(RAND() * (@max_tipo - @min_tipo) + @min_Tipo);
     SET @contas = 0;
     SET @max_conta = FLOOR(RAND() * 15 + 1);
     
     loop2: LOOP
-      SET @descricao = CONCAT('Conta ', CONVERT(@idConta, CHAR(45)));
+      SET @descricao = CONCAT('Conta Teste ', LPAD(TRIM(CONVERT(@idConta, CHAR(3))), 3, '0'))      ;
       
       IF NOT EXISTS(SELECT 1 FROM `conta` WHERE Descricao = @descricao) THEN
-        INSERT INTO `conta` (`IdTipoConta`, `Descricao`) VALUES (@idTipo, @descricao);
+        INSERT INTO `conta` (`IdTipoConta`, `Descricao`) VALUES (@idTipoConta, @descricao);
       
         SET @contas = @contas + 1;
         SET @vezes = @vezes + 1;
@@ -263,6 +263,51 @@ BEGIN
       END IF;
   
       SET @idConta = @idConta + 1;
+    END LOOP loop2;
+  END WHILE;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FillTiposConta` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `FillTiposConta`()
+BEGIN
+  SET @idTipoConta = 1;
+  SET @vezes = 0;
+  
+  DELETE FROM `tipoconta`
+  WHERE Id NOT IN (SELECT DISTINCT IdTipoConta from `conta`);
+  
+  WHILE @vezes < 150 DO 
+    SET @tiposConta = 0;
+    SET @max_conta = FLOOR(RAND() * 15 + 1);
+    
+    loop2: LOOP
+      SET @descricao = CONCAT('Conta ', LPAD(TRIM(CONVERT(@idTipoConta, CHAR(3))), 3, '0'))      ;
+      
+      IF NOT EXISTS(SELECT 1 FROM `tipoconta` WHERE Descricao = @descricao) THEN
+        INSERT INTO `tipoconta` (`Descricao`) VALUES (@descricao);
+      
+        SET @tiposConta = @tiposConta + 1;
+        SET @vezes = @vezes + 1;
+      
+        IF @tiposConta >= @max_conta THEN
+          LEAVE loop2;
+        END IF;
+      END IF;
+  
+      SET @idTipoConta = @idTipoConta + 1;
     END LOOP loop2;
   END WHILE;
 END ;;
@@ -544,4 +589,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-09 13:00:01
+-- Dump completed on 2024-03-10 13:22:35
