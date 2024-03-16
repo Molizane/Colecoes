@@ -1,5 +1,5 @@
 import express from 'express';
-import { insert, update, exclude, getById } from '../db/LanctoDb.js';
+import { insert, update, exclude, getById, getByIdLote } from '../db/LanctoDb.js';
 
 const router = express.Router();
 
@@ -83,6 +83,28 @@ router.get('/:id?', async (req, res, next) => {
         }
 
         const result = await getById(req.params.id);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
+    } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
+        next(err);
+    }
+});
+
+router.get('/lote/:id', async (req, res, next) => {
+    try {
+        logger.info(`GET /lancto/lote/${req.params.id} `);
+
+        const result = await getByIdLote(req.params.id);
 
         if (result.status) {
             res.status(500).send(result);

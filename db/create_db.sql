@@ -1,3 +1,5 @@
+CREATE DATABASE  IF NOT EXISTS `contas_prod` /*!40100 DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_bin */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `contas_prod`;
 -- MySQL dump 10.13  Distrib 8.0.32, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: contas_dev
@@ -44,7 +46,7 @@ DROP TABLE IF EXISTS `lancto`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `lancto` (
-  `Id` int unsigned NOT NULL,
+  `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `IdConta` int NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
@@ -55,11 +57,15 @@ CREATE TABLE `lancto` (
   `DtVencto` datetime NOT NULL,
   `DtPagto` datetime DEFAULT NULL,
   `FlPago` tinyint NOT NULL DEFAULT '0',
+  `IdLote` varchar(37) COLLATE utf8mb4_bin NOT NULL,
+  `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_lancto_conta` (`IdConta`,`DtLancto`),
+  UNIQUE KEY `ui_lancto_IdLote` (`IdLote`,`DtVencto`) /*!80000 INVISIBLE */,
   KEY `fk_lancto_conta_idx` (`IdConta`),
   CONSTRAINT `fk_lancto_conta` FOREIGN KEY (`IdConta`) REFERENCES `conta` (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -171,9 +177,15 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteLancto`(
-  IN p_Id INT
+  IN p_Id INT,
+  OUT p_IdLote VARCHAR(37),
+  OUT p_DtVencto DATETIME
 )
 BEGIN
+  SELECT IdLote, DtVencto INTO p_IdLote, p_DtVencto
+  FROM `lancto`
+  WHERE Id = p_Id;
+
   DELETE FROM `lancto`
   WHERE `Id` = p_Id;
 END ;;
@@ -363,12 +375,14 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_IdConta INT,
   IN p_Descricao VARCHAR(100),
   IN p_VlLancto DOUBLE,
-  IN p_DtVencto DATETIME
+  IN p_DtVencto DATETIME,
+  OUT p_Id INT,
+  INOUT p_IdLote VARCHAR(37)
 )
 BEGIN
   DECLARE Cnt INT;
 
-  SELECT COUNT(1) INTO Cnt FROM `Conta` WHERE `IdConta` = p_IdConta;
+  SELECT COUNT(1) INTO Cnt FROM `Conta` WHERE `Id` = p_IdConta;
 
   IF Cnt = 0 THEN
     SIGNAL SQLSTATE '45000'
@@ -385,8 +399,14 @@ BEGIN
       SET MESSAGE_TEXT = 'Valor do Lançamento inválido';
   END IF;
 
-  INSERT INTO `lancto` (`IdConta`, `Descricao`, `VlLancto`, `DtVencto`)
-  VALUES (p_IdConta, p_Descricao, p_VlLancto, p_DtVencto);
+  IF p_IdLote IS NULL THEN
+    SET p_IdLote = UUID();
+  END IF;
+
+  INSERT INTO `lancto` (`IdConta`, `Descricao`, `VlLancto`, `DtVencto`, `IdLote`)
+  VALUES (p_IdConta, p_Descricao, p_VlLancto, p_DtVencto, p_IdLote);
+  
+  set p_id = LAST_INSERT_ID();
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -507,13 +527,15 @@ DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
   IN p_Id INT,
   IN p_Descricao VARCHAR(100),
+  IN p_DtLancto DATETIME,
+  IN p_VlLancto DOUBLE,
   IN p_DtVencto DATETIME,
-  IN p_VlLancto DOUBLE
+  OUT p_IdLote VARCHAR(37)
 )
 BEGIN
   DECLARE v_FlPago INT;
 
-  SELECT FlPago INTO v_FlPago
+  SELECT FlPago, IdLote INTO v_FlPago, p_IdLote
   FROM `lancto`
   WHERE Id = p_Id;
 
@@ -525,6 +547,7 @@ BEGIN
   UPDATE `lancto`
   SET `Descricao` = p_Descricao,
       `VlLancto` = p_VlLancto,
+      `DtLancto` = p_DtLancto,
       `DtVencto` = p_DtVencto,
       `DtAlteracao` = CURRENT_TIMESTAMP
   WHERE `Id` = p_Id;
@@ -589,4 +612,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-10 13:22:35
+-- Dump completed on 2024-03-16 13:22:37
