@@ -40,6 +40,10 @@ input[type=search] {
   padding-left: 10px;
 }
 
+input[type=checkbox] {
+  cursor: pointer;
+}
+
 .btn-insert {
   background-color: rgb(31, 223, 95);
   color: rgb(4, 32, 56);

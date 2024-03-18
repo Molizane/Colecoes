@@ -34,6 +34,7 @@ export default function Conta() {
     const [lenDescricao, setLenDescricao] = useState(0);
     const [filtro, setFiltro] = useState('');
     const [filtrados, setFiltrados] = useState(null);
+    const [filtraTipo, setFiltraTipo] = useState(false);
 
     const errPopup = function (msg) {
         setTitulo('Erro');
@@ -76,19 +77,8 @@ export default function Conta() {
         }
 
         setContas(response.data);
+        filtraContas(response.data, filtro, filtraTipo);
         setIsLoading(false);
-
-        if (filtro) {
-            const filtrados = response.data.filter((reg) => reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1);
-            setFiltrados(filtrados);
-            const tiposDistintos = [...new Set(filtrados.map(item => item.tipoConta))];
-            setTiposDistintos(tiposDistintos);
-            return;
-        }
-
-        setFiltrados(response.data);
-        const tiposDistintos = [...new Set(response.data.map(item => item.tipoConta))];
-        setTiposDistintos(tiposDistintos);
     };
 
     useEffect(() => {
@@ -114,23 +104,28 @@ export default function Conta() {
         setConta({ ...conta, idTipoConta: event.target.value });
     };
 
-    const handleFilterChange = (event) => {
-        var txt = event.target.value.trim();
-        setFiltro(txt);
-
-        if (txt) {
-            const filtrados = contas.filter((reg) => reg.descricao.toLowerCase().indexOf(txt.toLowerCase()) !== -1);
+    const filtraContas = (contas, filtro, filtraTipo) => {
+        if (filtro) {
+            const filtrados = contas.filter(
+                (reg) =>
+                    reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1
+                    ||
+                    (filtraTipo && reg.tipoConta.toLowerCase().indexOf(filtro.toLowerCase()) !== -1));
             setFiltrados(filtrados);
-
             const tiposDistintos = [...new Set(filtrados.map(item => item.tipoConta))];
             setTiposDistintos(tiposDistintos);
             return;
         }
 
         setFiltrados(contas);
-
         const tiposDistintos = [...new Set(contas.map(item => item.tipoConta))];
         setTiposDistintos(tiposDistintos);
+    };
+
+    const handleFilterChange = (event) => {
+        var txt = event.target.value.trim();
+        setFiltro(txt);
+        filtraContas(contas, txt, filtraTipo);
     };
 
     const handleCreate = async function () {
@@ -143,7 +138,6 @@ export default function Conta() {
     };
 
     const handleEdit = async function (id) {
-        console.log(id);
         const reg = contas.find((r) => r.id == id);
         setConta(reg);
         setStatus('edit');
@@ -154,7 +148,6 @@ export default function Conta() {
     };
 
     const handleDelete = async function (id) {
-        console.log(id);
         setId(id);
         setStatus('delete');
         setTituloCRUD('Atenção!');
@@ -163,8 +156,6 @@ export default function Conta() {
     };
 
     const doPopupAction = async function () {
-        console.log(status);
-
         if (status === 'delete') {
             await doDelete();
             return;
@@ -223,6 +214,11 @@ export default function Conta() {
         setRefresh(!refresh);
     };
 
+    const handleFiltroTipos = function (e) {
+        setFiltraTipo(e.target.checked);
+        filtraContas(contas, filtro, e.target.checked);
+    }
+
     return (
         <div className={styles.container}>
             <div className='row m-0'>
@@ -232,7 +228,11 @@ export default function Conta() {
                             <span>Contas</span>
                             <button className='btn-insert' onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
-                        <input type='search' className={styles.search} placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
+                        <div>
+                            <span className={styles.spanTipos}>Inclui tipos no filtro</span>
+                            <input className={styles.spanTipos} type='checkbox' name='chkTipos' onChange={handleFiltroTipos} />
+                            <input type='search' className={styles.search} placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
+                        </div>
                     </div>
                     <hr />
                 </div>

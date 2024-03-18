@@ -94,7 +94,6 @@ export default function TipoConta() {
     };
 
     const handleEdit = async function (id) {
-        console.log(id);
         const reg = tipos.find((r) => r.id == id);
         setTipo(reg);
         setStatus('edit');
@@ -105,7 +104,6 @@ export default function TipoConta() {
     };
 
     const handleDelete = async function (id) {
-        console.log(id);
         setId(id);
         setStatus('delete');
         setTituloCRUD('Atenção!');

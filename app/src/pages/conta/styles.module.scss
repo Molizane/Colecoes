@@ -4,7 +4,7 @@
 
 .titulo {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     padding-left: 10px;
     width: 100%
@@ -62,4 +62,8 @@
 .grupoTexto {
     color: #3a3636;
     font-size: 1.2rem;
+}
+
+.spanTipos {
+    margin-right: 5px;
 }
