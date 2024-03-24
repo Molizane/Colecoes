@@ -1,5 +1,5 @@
 import express from 'express';
-import { insert, update, exclude, getById, getByIdLote } from '../db/LanctoDb.js';
+import { insert, update, exclude, close, reopen, getAll, getByIdPai, getByIdParcela, getByIdTipoConta, getByIdLote } from '../db/LanctoDb.js';
 
 const router = express.Router();
 
@@ -49,10 +49,10 @@ router.put('/', async (req, res, next) => {
     }
 });
 
-router.delete('/:id?', async (req, res, next) => {
+router.delete('/:id/:parcela', async (req, res, next) => {
     try {
-        logger.info(`DELETE /lancto/${req.params.id}`);
-        const result = await exclude(req.params.id);
+        logger.info(`DELETE /lancto/${req.params.id}/${req.params.parcela}`);
+        const result = await exclude(req.params.id, req.params.parcela);
 
         if (result.status) {
             res.status(500).send(result);
@@ -61,7 +61,35 @@ router.delete('/:id?', async (req, res, next) => {
             res.send(result);
         }
 
-        logger.info(`DELETE /lancto/${req.params.id} - ${JSON.stringify(result)}`);
+        logger.info(`DELETE /lancto/${req.params.id}/${req.params.parcela} - ${JSON.stringify(result)}`);
+    } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+            res.status(500).send(err.response.data);
+            return;
+        }
+
+        next(err);
+    }
+});
+
+// :crit é opcional
+router.get('/list/:crit?', async (req, res, next) => {
+    try {
+        if (req.params.crit) {
+            logger.info(`GET /lancto/list/${req.params.crit} `);
+        }
+        else {
+            logger.info('GET /lancto/list');
+        }
+
+        const result = await getAll(req.params.crit);
+
+        if (result.status) {
+            res.status(500).send(result);
+        }
+        else {
+            res.send(result);
+        }
     } catch (err) {
         if (err.response && err.response.data && err.response.data.msg) {
             res.status(500).send(err.response.data);
@@ -73,7 +101,7 @@ router.delete('/:id?', async (req, res, next) => {
 });
 
 // :id é opcional
-router.get('/:id?', async (req, res, next) => {
+router.get('/pai/:id?', async (req, res, next) => {
     try {
         if (!isNaN(req.params.id)) {
             logger.info(`GET /lancto/${req.params.id} `);
@@ -82,7 +110,7 @@ router.get('/:id?', async (req, res, next) => {
             logger.info('GET /lancto');
         }
 
-        const result = await getById(req.params.id);
+        const result = await getByIdPai(req.params.id);
 
         if (result.status) {
             res.status(500).send(result);
@@ -100,9 +128,14 @@ router.get('/:id?', async (req, res, next) => {
     }
 });
 
-router.get('/lote/:id', async (req, res, next) => {
+router.get('/lote/:id?', async (req, res, next) => {
     try {
-        logger.info(`GET /lancto/lote/${req.params.id} `);
+        if (!isNaN(req.params.id)) {
+            logger.info(`GET /lancto/lote/${req.params.id}`);
+        }
+        else {
+            logger.info(`GET /lancto/lote`);
+        }
 
         const result = await getByIdLote(req.params.id);
 

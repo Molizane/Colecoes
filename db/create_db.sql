@@ -51,7 +51,7 @@ CREATE TABLE `conta` (
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=800 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=802 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -120,7 +120,7 @@ CREATE TABLE `lancto` (
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -131,7 +131,7 @@ DROP TABLE IF EXISTS `lanctoitens`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `lanctoitens` (
-  `Id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Id único do lançamento',
+  `IdLancto` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Id único do lançamento',
   `DtVencto` date NOT NULL COMMENT 'Data do vencimento',
   `Parcela` int unsigned NOT NULL DEFAULT '0' COMMENT 'Nº da parcela',
   `VlLancto` double unsigned NOT NULL COMMENT 'Valor da parcela',
@@ -140,8 +140,10 @@ CREATE TABLE `lanctoitens` (
   `VlAcrescimo` double unsigned NOT NULL DEFAULT '0' COMMENT 'Acréscimo',
   `VlDesconto` double unsigned NOT NULL DEFAULT '0' COMMENT 'Desconto',
   `VlTotal` double GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL COMMENT 'Valor Total (calculado)',
-  PRIMARY KEY (`Id`,`DtVencto`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
+  `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`IdLancto`,`DtVencto`),
+  UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +157,7 @@ CREATE TABLE `lote` (
   `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -172,7 +174,7 @@ CREATE TABLE `tipoconta` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=2784 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=2785 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -182,6 +184,45 @@ CREATE TABLE `tipoconta` (
 --
 -- Dumping routines for database 'contas_dev'
 --
+/*!50003 DROP FUNCTION IF EXISTS `Pascoa` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` FUNCTION `Pascoa`(p_Ano INT) RETURNS date
+    NO SQL
+BEGIN
+  DECLARE v_R1, v_R2, v_R3, v_R4, v_R5 INT;
+  DECLARE r_Pascoa DATE;
+  DECLARE v_VD INT;
+
+  SET v_R1 = p_Ano mod 19;
+  SET v_R2 = p_Ano mod 4;
+  SET v_R3 = p_Ano mod 7;
+  SET v_R4 = (19 * v_R1 + 24) mod 30;
+  SET v_R5 = (6 * v_R4 + 4 * v_R3 + 2 * v_R2 + 5) mod 7;
+  SET r_Pascoa = STR_TO_DATE(CONCAT(p_Ano, ',', 3, ',', 22), '%Y,%m,%d');
+  SET r_Pascoa = DATE_ADD(r_Pascoa, INTERVAL v_R4 + v_R5 DAY);
+  SET v_VD = DAYOFMONTH(r_Pascoa);
+
+  IF v_VD = 26 THEN
+    SET r_Pascoa = STR_TO_DATE(CONCAT(p_Ano, ',', 4, ',', 19), '%Y,%m,%d');
+  ELSEIF v_VD = 25 AND v_R1 > 10 then
+    SET r_Pascoa = STR_TO_DATE(CONCAT(p_Ano, ',', 4, ',', 18), '%Y,%m,%d');
+  END IF;
+
+  RETURN r_Pascoa;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `CloseLancto` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -268,16 +309,17 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteLancto`(
   IN p_Id INT,
-  OUT p_IdLote VARCHAR(37),
-  OUT p_DtVencto DATETIME
+  IN p_Parcela INT
 )
 BEGIN
-  SELECT IdLote, DtVencto INTO p_IdLote, p_DtVencto
-  FROM `lancto`
-  WHERE Id = p_Id;
+  DELETE FROM `lanctoitens`
+  WHERE `IdLancto` = p_Id
+    AND `Parcela` = p_Parcela;
 
-  DELETE FROM `lancto`
-  WHERE `Id` = p_Id;
+  IF NOT EXISTS(SELECT 1 FROM `lanctoitens` WHERE `IdLancto` = p_Id) THEN
+    DELETE FROM `lancto`
+    WHERE `Id` = p_Id;
+  END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -533,7 +575,7 @@ BEGIN
   set p_id = LAST_INSERT_ID();
 
   insert_loop: LOOP
-    INSERT INTO `lanctoitens` (`Id`, `Parcela`, `DtVencto`, `VlLancto`)
+    INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `DtVencto`, `VlLancto`)
     VALUES (p_Id, v_Parcela, v_DtReal, p_VlLancto);
 
     SET p_Parcelas = p_Parcelas - 1;
@@ -637,52 +679,76 @@ DELIMITER ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`angelo`@`localhost` PROCEDURE `PreencherCalendario`(ano INT)
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `PreencherCalendario`(p_Ano INT)
 BEGIN
-    DECLARE dataatual DATE;
-    DECLARE datainicial DATE;
-    DECLARE datafinal DATE;
+  DECLARE v_DataAtual DATE;
+  DECLARE v_DataInicial DATE;
+  DECLARE v_DataFinal DATE;
+  DECLARE v_DataPascoa DATE;
+  DECLARE v_Carnaval DATE;
+  DECLARE v_SextaSanta DATE;
+  DECLARE v_CorpusChristi DATE;
 
-    IF ano < 1000 THEN
-      SET ano = ano + 2000;
-    END IF;
-    
-    SET datainicial = CONCAT(ano, '-01-31');
-    SET datafinal = CONCAT(ano, '-12-31');
-    SET dataatual = datainicial;
-    
-    DELETE FROM `calendario` WHERE data BETWEEN datainicial AND datafinal;
+  IF p_Ano < 1000 THEN
+    SET p_Ano = p_Ano + 2000;
+  END IF;
 
-    WHILE dataatual < datafinal DO
-        INSERT INTO `calendario` (`Data`, `DiaUtil`)
-        VALUES (dataatual, CASE DAYOFWEEK(dataatual) WHEN 1 THEN 0 WHEN 7 then 0 ELSE 1 END);
+  SET v_DataInicial = CONCAT(p_Ano, '-01-31');
+  SET v_DataFinal = CONCAT(p_Ano, '-12-31');
+  SET v_DataAtual = v_DataInicial;
 
-        SET dataatual = ADDDATE(dataatual, INTERVAL 1 DAY);
-    END WHILE;
-    
-    UPDATE calendario c
-    INNER JOIN feriados f
-      ON f.Dia = c.Dia
-     AND f.Mes = c.Mes
-    SET c.Feriado = 1
-    WHERE data BETWEEN datainicial AND datafinal;
-    
-    UPDATE calendario c
-    INNER JOIN feriadosmoveis f
-      ON f.Ano = c.Ano
-     AND f.Dia = c.Dia
-     AND f.Mes = c.Mes
-     AND f.Estado IN ('--', 'SP')
-    SET c.Feriado = 1
-    WHERE data BETWEEN datainicial AND datafinal;
-    
-    UPDATE calendario c
-    INNER JOIN feriadosestados f
-      ON f.Dia = c.Dia
-     AND f.Mes = c.Mes
-     AND f.Estado = 'SP'
-    SET c.Feriado = 1
-    WHERE data BETWEEN datainicial AND datafinal;
+  DELETE FROM `calendario` WHERE data BETWEEN v_DataInicial AND v_DataFinal;
+  DELETE FROM `feriadosmoveis` WHERE Ano = p_Ano AND Estado = '--';
+
+  WHILE v_DataAtual < v_DataFinal DO
+      INSERT INTO `calendario` (`Data`, `DiaUtil`)
+      VALUES (v_DataAtual, CASE DAYOFWEEK(v_DataAtual) WHEN 1 THEN 0 WHEN 7 then 0 ELSE 1 END);
+
+      SET v_DataAtual = ADDDATE(v_DataAtual, INTERVAL 1 DAY);
+  END WHILE;
+
+  SET v_DataPascoa = Pascoa(p_Ano);
+  SET v_Carnaval = SUBDATE(v_DataPascoa, INTERVAL 47 DAY);
+  SET v_SextaSanta = SUBDATE(v_DataPascoa, INTERVAL 2 DAY);
+  SET v_CorpusChristi = ADDDATE(v_DataPascoa, INTERVAL 60 DAY);
+
+  INSERT INTO `feriadosmoveis` (`Ano`, `Mes`, `Dia`, `Feriado`)
+  VALUES (YEAR(v_Carnaval), MONTH(v_Carnaval), DAYOFMONTH(v_Carnaval), 'Carnaval');
+
+  INSERT INTO `feriadosmoveis` (`Ano`, `Mes`, `Dia`, `Feriado`)
+  VALUES (YEAR(v_SextaSanta), MONTH(v_SextaSanta), DAYOFMONTH(v_SextaSanta), 'Sexta-feira Santa');
+
+  INSERT INTO `feriadosmoveis` (`Ano`, `Mes`, `Dia`, `Feriado`)
+  VALUES (YEAR(v_CorpusChristi), MONTH(v_CorpusChristi), DAYOFMONTH(v_CorpusChristi), 'Corpus Christi');
+
+  UPDATE calendario c
+  INNER JOIN feriados f
+    ON f.Dia = c.Dia
+   AND f.Mes = c.Mes
+  SET c.Feriado = 1
+  WHERE data BETWEEN v_DataInicial AND v_DataFinal;
+
+  UPDATE calendario c
+  INNER JOIN feriadosmoveis f
+    ON f.Ano = c.Ano
+   AND f.Dia = c.Dia
+   AND f.Mes = c.Mes
+   AND f.Estado IN ('--', 'SP')
+  SET c.Feriado = 1
+  WHERE data BETWEEN v_DataInicial AND v_DataFinal;
+
+  -- Carnaval, Sexta-Feira Santa, Corpus Christi
+  -- UPDATE calendario c
+  -- SET c.Feriado = 1
+  -- WHERE data IN (SUBDATE(v_DataPascoa, INTERVAL 47 DAY), SUBDATE(v_DataPascoa, INTERVAL 2 DAY), ADDDATE(v_DataPascoa, INTERVAL 60 DAY));
+
+  UPDATE calendario c
+  INNER JOIN feriadosestados f
+    ON f.Dia = c.Dia
+   AND f.Mes = c.Mes
+   AND f.Estado = 'SP'
+  SET c.Feriado = 1
+  WHERE data BETWEEN v_DataInicial AND v_DataFinal;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -770,19 +836,18 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
-  IN p_Id INT,
+  IN p_IdLancto INT,
+  IN p_Parcela INT,
   IN p_Descricao VARCHAR(100),
-  IN p_DtLancto DATETIME,
   IN p_VlLancto DOUBLE,
-  IN p_DtVencto DATETIME,
-  OUT p_IdLote VARCHAR(37)
+  IN p_DtVencto DATETIME
 )
 BEGIN
   DECLARE v_FlPago INT;
 
-  SELECT FlPago, IdLote INTO v_FlPago, p_IdLote
-  FROM `lancto`
-  WHERE Id = p_Id;
+  SELECT `FlPago` INTO v_FlPago
+  FROM `lanctoitens`
+  WHERE `IdLancto` = p_IdLancto;
 
   IF v_FlPago = 1 THEN
     SIGNAL SQLSTATE '42003'
@@ -791,11 +856,15 @@ BEGIN
 
   UPDATE `lancto`
   SET `Descricao` = p_Descricao,
-      `VlLancto` = p_VlLancto,
-      `DtLancto` = p_DtLancto,
+      `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `Id` = p_IdLancto;
+
+  UPDATE `lanctoitens`
+  SET `VlLancto` = p_VlLancto,
       `DtVencto` = p_DtVencto,
       `DtAlteracao` = CURRENT_TIMESTAMP
-  WHERE `Id` = p_Id;
+  WHERE `IdLancto` = p_IdLancto
+    AND `Parcela` = p_Parcela;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -857,4 +926,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-24  0:30:50
+-- Dump completed on 2024-03-24 14:42:08

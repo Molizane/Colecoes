@@ -18,6 +18,7 @@ export default function Lancto() {
     const [id, setId] = useState();
     const [lancto, setLancto] = useState(null);
     const [contas, setContas] = useState([]);
+    const [criterio, setCriterio] = useState('a');
 
     // Popup mensagens
     const [messageShow, setMessageShow] = useState(false);
@@ -68,7 +69,7 @@ export default function Lancto() {
     };
 
     const getAllLanctos = async () => {
-        const response = await servicoLancto.getAllLanctos();
+        const response = await servicoLancto.getAllLanctos(criterio);
 
         if (response.data.msg) {
             errPopup(response.data.msg);
@@ -85,11 +86,12 @@ export default function Lancto() {
 
         //console.log('page_load');
         // Título da aba
-        // document.title = `Lanctos ${process.env.NEXT_PUBLIC_VERSION} - Lanctos`;
-        document.title = 'Lanctos';
+        //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
+        document.title = 'Lançamentos';
     }, []);
 
     useEffect(() => {
+        //console.log('page_refresh');
         getAllLanctos();
     }, [refresh]);
 
@@ -106,10 +108,9 @@ export default function Lancto() {
     const filtraLanctos = (lanctos, filtro, filtraConta) => {
         if (filtro) {
             const filtrados = lanctos.filter(
-                (reg) =>
-                    reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1
-                    ||
-                    (filtraConta && reg.contaLancto.toLowerCase().indexOf(filtro.toLowerCase()) !== -1));
+                (reg) => reg.descricao.toLowerCase().indexOf(filtro.toLowerCase()) !== -1
+                //|| (filtraConta && reg.contaLancto.toLowerCase().indexOf(filtro.toLowerCase()) !== -1)
+            );
             setFiltrados(filtrados);
             return;
         }
@@ -220,7 +221,7 @@ export default function Lancto() {
                 <div className='col-12'>
                     <div className={styles.titulo}>
                         <div className={styles.titulo2}>
-                            <h4>Tipos de Contas</h4>
+                            <h4>Lançamentos de Contas</h4>
                             <button className='btn-insert' onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
                         <input type='search' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />
@@ -229,14 +230,26 @@ export default function Lancto() {
                 </div>
             </div>
             <div style={{ height: '75vh', overflowY: 'scroll' }}>
+                <div className='row'>
+                    <div className='col-3'>
+                        Descrição
+                    </div>
+                    <div className='col-3'>
+                        Vencimento
+                    </div>
+                    <div className='col-3'>
+                        Valor
+                    </div>
+                </div>
                 <div className='row row-cols-md-5 m-0'>
                     {
-                        !isLoading && filtrados && filtrados.map(tipo => (
-                            <div key={`tipo${tipo.id}`} className='p-2'>
+                        !isLoading && filtrados && filtrados.map(lancto => (
+                            <div key={`lancto${lancto.id}${lancto.parcela}`} className='p-2'>
                                 <Card
-                                    id={tipo.id}
-                                    qtde={tipo.qtde}
-                                    linha2={tipo.descricao}
+                                    id={lancto.id}
+                                    qtde={0}
+                                    linha1={lancto.conta}
+                                    linha2={lancto.descricao}
                                     color='white'
                                     bgColor='#3f3f3f'
                                     delColor='white'

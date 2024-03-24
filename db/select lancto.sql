@@ -4,25 +4,19 @@ TRUNCATE TABLE `contas_dev`.`lancto`;
 TRUNCATE TABLE `contas_dev`.`lote`;
 */
 
-SELECT `lancto`.`Id`,
-       `lancto`.`IdConta`,
-       `lancto`.`Descricao`,
-       `lancto`.`DtLancto`,
-       `lancto`.`IdLote`,
-       `lancto`.`Parcelas`,
-       `lancto`.`TpLancto`,
-       `lancto`.`FlgDiasUteis`
-FROM `contas_dev`.`lancto`
-ORDER BY IdLote;
+-- SELECT l.`Id`, l.`IdConta`, l.`Descricao`, l.`DtLancto`, l.`IdLote`, l.`Parcelas`, l.`TpLancto`, l.`FlgDiasUteis`
+-- FROM `contas_dev`.`lancto` l
+-- ORDER BY l.`IdLote`;
 
-SELECT `lanctoitens`.`Id`,
-       `lanctoitens`.`Parcela`,
-       `lanctoitens`.`DtVencto`,
-       `lanctoitens`.`VlLancto`,
-       `lanctoitens`.`FlPago`,
-       `lanctoitens`.`DtPagto`,
-       `lanctoitens`.`VlAcrescimo`,
-       `lanctoitens`.`VlDesconto`,
-       `lanctoitens`.`VlTotal`
-FROM `contas_dev`.`lanctoitens`
-ORDER BY Id, DtVencto;
+-- SELECT li.`IdLancto`, li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
+-- FROM `contas_dev`.`lanctoitens` li
+-- ORDER BY li.`IdLancto`, li.`DtVencto`;
+
+SELECT l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`, l.`DtLancto`, l.`IdLote`, l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`
+     , li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
+FROM `contas_dev`.`lancto` l
+INNER JOIN `contas_dev`.`lanctoitens` li
+ON li.`IdLancto` = l.`Id`
+INNER JOIN `contas_dev`.`conta` c
+ON c.`Id` = l.`IdConta`
+ORDER BY li.`DtVencto`, l.`Descricao`, l.`IdLote`, li.`IdLancto`;
