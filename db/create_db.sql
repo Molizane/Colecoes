@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `contas_prod` /*!40100 DEFAULT CHARACTER SET utf8mb3 COLLATE utf8mb3_bin */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `contas_prod`;
 -- MySQL dump 10.13  Distrib 8.0.32, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: contas_dev
@@ -16,6 +14,25 @@ USE `contas_prod`;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `calendario`
+--
+
+DROP TABLE IF EXISTS `calendario`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `calendario` (
+  `Data` date NOT NULL,
+  `Ano` int GENERATED ALWAYS AS (year(`Data`)) VIRTUAL,
+  `Mes` tinyint GENERATED ALWAYS AS (month(`Data`)) VIRTUAL,
+  `Dia` tinyint GENERATED ALWAYS AS (dayofmonth(`Data`)) VIRTUAL,
+  `DiaUtil` int NOT NULL DEFAULT '1',
+  `Feriado` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`Data`),
+  UNIQUE KEY `ui_calendario_DMY` (`Ano`,`Mes`,`Dia`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `conta`
@@ -39,6 +56,54 @@ CREATE TABLE `conta` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `feriados`
+--
+
+DROP TABLE IF EXISTS `feriados`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `feriados` (
+  `Mes` tinyint NOT NULL,
+  `Dia` tinyint NOT NULL,
+  `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
+  PRIMARY KEY (`Mes`,`Dia`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `feriadosestados`
+--
+
+DROP TABLE IF EXISTS `feriadosestados`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `feriadosestados` (
+  `Estado` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
+  `Mes` tinyint NOT NULL,
+  `Dia` tinyint NOT NULL,
+  `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
+  PRIMARY KEY (`Estado`,`Mes`,`Dia`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `feriadosmoveis`
+--
+
+DROP TABLE IF EXISTS `feriadosmoveis`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `feriadosmoveis` (
+  `Ano` int NOT NULL,
+  `Mes` tinyint NOT NULL,
+  `Dia` tinyint NOT NULL,
+  `Estado` varchar(2) COLLATE utf8mb3_bin NOT NULL DEFAULT '--',
+  `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
+  PRIMARY KEY (`Ano`,`Mes`,`Dia`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `lancto`
 --
 
@@ -48,24 +113,38 @@ DROP TABLE IF EXISTS `lancto`;
 CREATE TABLE `lancto` (
   `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `IdConta` int NOT NULL,
-  `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `DtVencto` date NOT NULL,
   `VlLancto` double NOT NULL,
+  `DtPagto` date DEFAULT NULL,
   `VlAcrescimo` double NOT NULL DEFAULT '0',
   `VlDesconto` double NOT NULL DEFAULT '0',
   `VlTotal` double GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL,
-  `DtVencto` datetime NOT NULL,
-  `DtPagto` datetime DEFAULT NULL,
+  `IdLote` int NOT NULL,
+  `Parcelas` int NOT NULL DEFAULT '0',
+  `Parcela` int NOT NULL DEFAULT '0',
+  `TpLancto` char(1) COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
+  `FlgDiasUteis` tinyint NOT NULL DEFAULT '0',
   `FlPago` tinyint NOT NULL DEFAULT '0',
-  `IdLote` varchar(37) COLLATE utf8mb4_bin NOT NULL,
-  `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
-  UNIQUE KEY `ui_lancto_conta` (`IdConta`,`DtLancto`),
-  UNIQUE KEY `ui_lancto_IdLote` (`IdLote`,`DtVencto`) /*!80000 INVISIBLE */,
   KEY `fk_lancto_conta_idx` (`IdConta`),
   CONSTRAINT `fk_lancto_conta` FOREIGN KEY (`IdConta`) REFERENCES `conta` (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `lote`
+--
+
+DROP TABLE IF EXISTS `lote`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lote` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -375,38 +454,141 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_IdConta INT,
   IN p_Descricao VARCHAR(100),
   IN p_VlLancto DOUBLE,
-  IN p_DtVencto DATETIME,
+  IN p_DtVencto DATE,
+  IN p_Parcelas INT, -- número de registros a serem criados no lote
+  IN p_Intervalo CHAR(1), -- (S)emanal, (Q)uinzenal, (M)ensal, (B)imestral, (T)rimestral, (4) Quadrimestral, (6) Semestral, (A)nual
+  IN p_DiasUteis INT,
   OUT p_Id INT,
-  INOUT p_IdLote VARCHAR(37)
+  INOUT p_IdLote INT
 )
 BEGIN
-  DECLARE Cnt INT;
+  DECLARE v_DtReal DATE DEFAULT p_DtVencto;
+  DECLARE v_Parcelas INT;
+  DECLARE v_Parcela INT DEFAULT 1;
+  DECLARE v_Feriado INT;
+  DECLARE v_DiaUtil INT DEFAULT 0;
+  DECLARE v_DiaVencto INT DEFAULT DAYOFMONTH(p_DtVencto);
 
-  SELECT COUNT(1) INTO Cnt FROM `Conta` WHERE `Id` = p_IdConta;
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    GET DIAGNOSTICS CONDITION 1
+      @sqlstate = RETURNED_SQLSTATE,
+      @errno = MYSQL_ERRNO,
+      @text = MESSAGE_TEXT;
 
-  IF Cnt = 0 THEN
+    SET @full_error = CONCAT("ERROR ", @errno, " (", @sqlstate, "): ", @text);
+
+    ROLLBACK;
+
     SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Conta não existe';
+    SET MESSAGE_TEXT = @full_error;
+  END;
+
+  START TRANSACTION;
+
+  IF (SELECT COUNT(1) FROM `conta` WHERE `Id` = p_IdConta) = 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Conta não existe';
   END IF;
 
   IF p_Descricao IS NULL OR TRIM(p_Descricao) = '' THEN
     SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Descrição não informada';
+    SET MESSAGE_TEXT = 'Descrição não informada';
   END IF;
 
   IF p_VlLancto <= 0 THEN
     SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Valor do Lançamento inválido';
+    SET MESSAGE_TEXT = 'Valor do Lançamento inválido';
   END IF;
 
-  IF p_IdLote IS NULL THEN
-    SET p_IdLote = UUID();
+  IF p_IdLote IS NOT NULL AND p_IdLote > 0 THEN
+    IF (SELECT COUNT(1) FROM `lote` WHERE `Id` = p_IdLote) = 0 THEN
+      SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Lote não existe';
+    END IF;
+  ELSE
+    INSERT INTO lote (DtCriacao)
+    VALUES (CURRENT_TIMESTAMP);
+
+    SET p_IdLote = LAST_INSERT_ID();
   END IF;
 
-  INSERT INTO `lancto` (`IdConta`, `Descricao`, `VlLancto`, `DtVencto`, `IdLote`)
-  VALUES (p_IdConta, p_Descricao, p_VlLancto, p_DtVencto, p_IdLote);
-  
-  set p_id = LAST_INSERT_ID();
+  IF p_Parcelas IS NULL OR p_Parcelas < 1 THEN
+    SET p_Parcelas = 1;
+  END IF;
+
+  SET v_Parcelas = p_Parcelas;
+
+  IF p_DiasUteis <> 0 THEN
+    SET p_DiasUteis = 1;
+  END IF;
+
+  SET p_id = 0;
+  SET p_Descricao = TRIM(p_Descricao);
+
+  insert_loop: LOOP
+    INSERT INTO `lancto` (`IdConta`, `Descricao`, `DtVencto`, `VlLancto`, `IdLote`, `Parcelas`, `Parcela`, `TpLancto`, `FlgDiasUteis`)
+    VALUES (p_IdConta, p_Descricao, v_DtReal, p_VlLancto, p_IdLote, v_Parcelas, v_Parcela, p_Intervalo, p_DiasUteis);
+
+    -- Só salva o ID do registro principal
+    IF p_id = 0 THEN
+      set p_id = LAST_INSERT_ID();
+    END IF;
+
+    SET p_Parcelas = p_Parcelas - 1;
+
+    IF p_Parcelas = 0 THEN
+      LEAVE insert_loop;
+    END IF;
+
+    SET v_Parcela = v_Parcela + 1;
+
+    SET p_DtVencto = CASE p_Intervalo
+                          WHEN 'S' THEN ADDDATE(p_DtVencto, INTERVAL 1 WEEK)
+                          WHEN 'Q' THEN ADDDATE(p_DtVencto, INTERVAL 2 WEEK)
+                          WHEN 'B' THEN ADDDATE(p_DtVencto, INTERVAL 2 MONTH)
+                          WHEN 'T' THEN ADDDATE(p_DtVencto, INTERVAL 3 MONTH)
+                          WHEN '4' THEN ADDDATE(p_DtVencto, INTERVAL 4 MONTH)
+                          WHEN '6' THEN ADDDATE(p_DtVencto, INTERVAL 6 MONTH)
+                          WHEN 'A' THEN ADDDATE(p_DtVencto, INTERVAL 1 YEAR)
+                          ELSE ADDDATE(p_DtVencto, INTERVAL 1 MONTH)
+                     END;
+
+    IF v_DiaVencto > 28 AND DAYOFMONTH(p_DtVencto) <> v_DiaVencto AND p_DtVencto <> LAST_DAY(p_DtVencto) THEN
+      IF v_DiaVencto > DAYOFMONTH(LAST_DAY(p_DtVencto)) THEN
+        SET p_DtVencto = LAST_DAY(p_DtVencto);
+      ELSE
+        SET p_DtVencto = STR_TO_DATE(CONCAT(YEAR(p_DtVencto), ',', MONTH(p_DtVencto), ',', v_DiaVencto), '%Y,%m,%d');
+      END IF;
+    END IF;
+
+    SET v_DtReal = p_DtVencto;
+
+    IF p_DiasUteis <> 0 THEN
+      diasuteis: LOOP
+        SELECT SQL_CALC_FOUND_ROWS Feriado, DiaUtil INTO v_Feriado, v_DiaUtil
+        FROM calendario
+        WHERE `Data` = v_DtReal;
+
+        -- Não achou a data no calendário
+        IF FOUND_ROWS() = 0 THEN
+          LEAVE diasuteis;
+        END IF;
+
+        IF v_Feriado = 1 THEN
+          SET v_DiaUtil = 0;
+        END IF;
+
+        IF v_DiaUtil = 0 THEN
+          SET v_DtReal = ADDDATE(v_DtReal, INTERVAL 1 DAY);
+        ELSE
+          LEAVE diasuteis;
+        END IF;
+      END LOOP;
+    END IF;
+  END LOOP insert_loop;
+
+  COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -438,6 +620,68 @@ BEGIN
   END IF;
 
   INSERT INTO `TipoConta` (`Descricao`) VALUES (TRIM(p_Descricao));
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `PreencherCalendario` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`localhost` PROCEDURE `PreencherCalendario`(ano INT)
+BEGIN
+    DECLARE dataatual DATE;
+    DECLARE datainicial DATE;
+    DECLARE datafinal DATE;
+
+    IF ano < 1000 THEN
+      SET ano = ano + 2000;
+    END IF;
+    
+    SET datainicial = CONCAT(ano, '-01-31');
+    SET datafinal = CONCAT(ano, '-12-31');
+    SET dataatual = datainicial;
+    
+    DELETE FROM `calendario` WHERE data BETWEEN datainicial AND datafinal;
+
+    WHILE dataatual < datafinal DO
+        INSERT INTO `calendario` (`Data`, `DiaUtil`)
+        VALUES (dataatual, CASE DAYOFWEEK(dataatual) WHEN 1 THEN 0 WHEN 7 then 0 ELSE 1 END);
+
+        SET dataatual = ADDDATE(dataatual, INTERVAL 1 DAY);
+    END WHILE;
+    
+    UPDATE calendario c
+    INNER JOIN feriados f
+      ON f.Dia = c.Dia
+     AND f.Mes = c.Mes
+    SET c.Feriado = 1
+    WHERE data BETWEEN datainicial AND datafinal;
+    
+    UPDATE calendario c
+    INNER JOIN feriadosmoveis f
+      ON f.Ano = c.Ano
+     AND f.Dia = c.Dia
+     AND f.Mes = c.Mes
+     AND f.Estado IN ('--', 'SP')
+    SET c.Feriado = 1
+    WHERE data BETWEEN datainicial AND datafinal;
+    
+    UPDATE calendario c
+    INNER JOIN feriadosestados f
+      ON f.Dia = c.Dia
+     AND f.Mes = c.Mes
+     AND f.Estado = 'SP'
+    SET c.Feriado = 1
+    WHERE data BETWEEN datainicial AND datafinal;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -612,4 +856,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-16 13:22:37
+-- Dump completed on 2024-03-23 23:59:46
