@@ -27,8 +27,8 @@ CREATE TABLE `calendario` (
   `Ano` int GENERATED ALWAYS AS (year(`Data`)) VIRTUAL,
   `Mes` tinyint GENERATED ALWAYS AS (month(`Data`)) VIRTUAL,
   `Dia` tinyint GENERATED ALWAYS AS (dayofmonth(`Data`)) VIRTUAL,
-  `DiaUtil` int NOT NULL DEFAULT '1',
-  `Feriado` int NOT NULL DEFAULT '0',
+  `DiaUtil` int unsigned NOT NULL DEFAULT '1',
+  `Feriado` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Data`),
   UNIQUE KEY `ui_calendario_DMY` (`Ano`,`Mes`,`Dia`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
@@ -50,8 +50,7 @@ CREATE TABLE `conta` (
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
-  KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`),
-  CONSTRAINT `fk_conta_tipoconta` FOREIGN KEY (`IdTipoConta`) REFERENCES `tipoconta` (`Id`) ON DELETE CASCADE
+  KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=800 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -63,8 +62,8 @@ DROP TABLE IF EXISTS `feriados`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `feriados` (
-  `Mes` tinyint NOT NULL,
-  `Dia` tinyint NOT NULL,
+  `Mes` tinyint unsigned NOT NULL,
+  `Dia` tinyint unsigned NOT NULL,
   `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
   PRIMARY KEY (`Mes`,`Dia`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
@@ -79,8 +78,8 @@ DROP TABLE IF EXISTS `feriadosestados`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `feriadosestados` (
   `Estado` varchar(2) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
-  `Mes` tinyint NOT NULL,
-  `Dia` tinyint NOT NULL,
+  `Mes` tinyint unsigned NOT NULL,
+  `Dia` tinyint unsigned NOT NULL,
   `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
   PRIMARY KEY (`Estado`,`Mes`,`Dia`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
@@ -94,9 +93,9 @@ DROP TABLE IF EXISTS `feriadosmoveis`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `feriadosmoveis` (
-  `Ano` int NOT NULL,
-  `Mes` tinyint NOT NULL,
-  `Dia` tinyint NOT NULL,
+  `Ano` int unsigned NOT NULL,
+  `Mes` tinyint unsigned NOT NULL,
+  `Dia` tinyint unsigned NOT NULL,
   `Estado` varchar(2) COLLATE utf8mb3_bin NOT NULL DEFAULT '--',
   `Feriado` varchar(50) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL,
   PRIMARY KEY (`Ano`,`Mes`,`Dia`)
@@ -112,25 +111,37 @@ DROP TABLE IF EXISTS `lancto`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `lancto` (
   `Id` int unsigned NOT NULL AUTO_INCREMENT,
-  `IdConta` int NOT NULL,
+  `IdConta` int unsigned NOT NULL,
   `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `DtVencto` date NOT NULL,
-  `VlLancto` double NOT NULL,
-  `DtPagto` date DEFAULT NULL,
-  `VlAcrescimo` double NOT NULL DEFAULT '0',
-  `VlDesconto` double NOT NULL DEFAULT '0',
-  `VlTotal` double GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL,
-  `IdLote` int NOT NULL,
-  `Parcelas` int NOT NULL DEFAULT '0',
-  `Parcela` int NOT NULL DEFAULT '0',
+  `IdLote` int unsigned NOT NULL,
+  `Parcelas` int unsigned NOT NULL DEFAULT '0',
   `TpLancto` char(1) COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
-  `FlgDiasUteis` tinyint NOT NULL DEFAULT '0',
-  `FlPago` tinyint NOT NULL DEFAULT '0',
+  `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
-  KEY `fk_lancto_conta_idx` (`IdConta`),
-  CONSTRAINT `fk_lancto_conta` FOREIGN KEY (`IdConta`) REFERENCES `conta` (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+  KEY `fk_lancto_conta_idx` (`IdConta`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `lanctoitens`
+--
+
+DROP TABLE IF EXISTS `lanctoitens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `lanctoitens` (
+  `Id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Id único do lançamento',
+  `DtVencto` date NOT NULL COMMENT 'Data do vencimento',
+  `Parcela` int unsigned NOT NULL DEFAULT '0' COMMENT 'Nº da parcela',
+  `VlLancto` double unsigned NOT NULL COMMENT 'Valor da parcela',
+  `FlPago` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Flag de Pago',
+  `DtPagto` date DEFAULT NULL COMMENT 'Data de pagamento',
+  `VlAcrescimo` double unsigned NOT NULL DEFAULT '0' COMMENT 'Acréscimo',
+  `VlDesconto` double unsigned NOT NULL DEFAULT '0' COMMENT 'Desconto',
+  `VlTotal` double GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL COMMENT 'Valor Total (calculado)',
+  PRIMARY KEY (`Id`,`DtVencto`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -141,10 +152,10 @@ DROP TABLE IF EXISTS `lote`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `lote` (
-  `Id` int NOT NULL AUTO_INCREMENT,
+  `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +166,7 @@ DROP TABLE IF EXISTS `tipoconta`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tipoconta` (
-  `Id` int NOT NULL AUTO_INCREMENT,
+  `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `Descricao` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -463,7 +474,6 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
 )
 BEGIN
   DECLARE v_DtReal DATE DEFAULT p_DtVencto;
-  DECLARE v_Parcelas INT;
   DECLARE v_Parcela INT DEFAULT 1;
   DECLARE v_Feriado INT;
   DECLARE v_DiaUtil INT DEFAULT 0;
@@ -501,23 +511,14 @@ BEGIN
     SET MESSAGE_TEXT = 'Valor do Lançamento inválido';
   END IF;
 
-  IF p_IdLote IS NOT NULL AND p_IdLote > 0 THEN
-    IF (SELECT COUNT(1) FROM `lote` WHERE `Id` = p_IdLote) = 0 THEN
-      SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Lote não existe';
-    END IF;
-  ELSE
-    INSERT INTO lote (DtCriacao)
-    VALUES (CURRENT_TIMESTAMP);
+  INSERT INTO lote (DtCriacao)
+  VALUES (CURRENT_TIMESTAMP);
 
-    SET p_IdLote = LAST_INSERT_ID();
-  END IF;
+  SET p_IdLote = LAST_INSERT_ID();
 
   IF p_Parcelas IS NULL OR p_Parcelas < 1 THEN
     SET p_Parcelas = 1;
   END IF;
-
-  SET v_Parcelas = p_Parcelas;
 
   IF p_DiasUteis <> 0 THEN
     SET p_DiasUteis = 1;
@@ -526,14 +527,14 @@ BEGIN
   SET p_id = 0;
   SET p_Descricao = TRIM(p_Descricao);
 
-  insert_loop: LOOP
-    INSERT INTO `lancto` (`IdConta`, `Descricao`, `DtVencto`, `VlLancto`, `IdLote`, `Parcelas`, `Parcela`, `TpLancto`, `FlgDiasUteis`)
-    VALUES (p_IdConta, p_Descricao, v_DtReal, p_VlLancto, p_IdLote, v_Parcelas, v_Parcela, p_Intervalo, p_DiasUteis);
+  INSERT INTO `lancto` (`IdConta`, `Descricao`, `IdLote`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
+  VALUES (p_IdConta, p_Descricao, p_IdLote, p_Parcelas, p_Intervalo, p_DiasUteis);
 
-    -- Só salva o ID do registro principal
-    IF p_id = 0 THEN
-      set p_id = LAST_INSERT_ID();
-    END IF;
+  set p_id = LAST_INSERT_ID();
+
+  insert_loop: LOOP
+    INSERT INTO `lanctoitens` (`Id`, `Parcela`, `DtVencto`, `VlLancto`)
+    VALUES (p_Id, v_Parcela, v_DtReal, p_VlLancto);
 
     SET p_Parcelas = p_Parcelas - 1;
 
@@ -856,4 +857,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-23 23:59:46
+-- Dump completed on 2024-03-24  0:30:50
