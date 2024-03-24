@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/', async (req, res, next) => {
     try {
-        logger.info(`POST /lancto - ${req.body}`);
+        logger.info(`POST /lancto`); // - ${req.body}`);
         const result = await insert(req.body);
 
         if (result.status) {
@@ -15,7 +15,7 @@ router.post('/', async (req, res, next) => {
             res.send(result);
         }
 
-        logger.info(`POST /lancto - ${JSON.stringify(result)}`);
+        logger.info(`POST /lancto`); // - ${JSON.stringify(result)}`);
     } catch (err) {
         if (err.response && err.response.data && err.response.data.msg) {
             res.status(500).send(err.response.data);
@@ -28,7 +28,7 @@ router.post('/', async (req, res, next) => {
 
 router.put('/', async (req, res, next) => {
     try {
-        logger.info(`PUT /lancto - ${req.body}`);
+        logger.info(`PUT /lancto`); // - ${req.body}`);
         const result = await update(req.body);
 
         if (result.status) {
@@ -38,7 +38,7 @@ router.put('/', async (req, res, next) => {
             res.send(result);
         }
 
-        logger.info(`PUT /lancto - ${JSON.stringify(result)}`);
+        logger.info(`PUT /lancto`); // - ${JSON.stringify(result)}`);
     } catch (err) {
         if (err.response && err.response.data && err.response.data.msg) {
             res.status(500).send(err.response.data);
@@ -124,7 +124,7 @@ router.get('/lote/:id', async (req, res, next) => {
 
 router.put('/close', async (req, res, next) => {
     try {
-        logger.info(`PUT /lancto/close - ${req.body}`);
+        logger.info(`PUT /lancto/close`); // - ${req.body}`);
         const result = await close(req.body);
 
         if (result.status) {
@@ -147,7 +147,7 @@ router.put('/close', async (req, res, next) => {
 
 router.put('/reopen/:id', async (req, res, next) => {
     try {
-        logger.info(`PUT /lancto/reopen/${req.params.id}`);
+        logger.info(`PUT /lancto/reopen`); ///${req.params.id}`);
         const result = await reopen(req.params.id);
 
         if (result.status) {

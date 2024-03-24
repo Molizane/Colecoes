@@ -176,7 +176,7 @@ export default function TipoConta() {
                 <div className='col-12'>
                     <div className={styles.titulo}>
                         <div className={styles.titulo2}>
-                            <span>Tipos de Contas</span>
+                            <h4>Tipos de Contas</h4>
                             <button className='btn-insert' onClick={handleCreate}><FiPlus />Novo</button>
                         </div>
                         <input type='search' placeholder='Filtro..' name='filtro' maxLength={45} value={filtro} onChange={handleFilterChange} />

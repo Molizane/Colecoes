@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post('/', async (req, res, next) => {
     try {
-        logger.info(`POST /tipoConta - ${JSON.stringify(req.body)}`);
+        logger.info(`POST /tipoConta`); // - ${JSON.stringify(req.body)}`);
         const result = await insert(req.body);
 
         if (result.status) {
@@ -28,7 +28,7 @@ router.post('/', async (req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
     try {
-        logger.info(`PUT /tipoConta - ${JSON.stringify(req.body)}`);
+        logger.info(`PUT /tipoConta`); // - ${JSON.stringify(req.body)}`);
         const result = await update(req.body);
 
         if (result.status) {
