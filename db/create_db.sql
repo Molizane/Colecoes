@@ -115,7 +115,7 @@ CREATE TABLE `lancto` (
   `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `IdLote` int unsigned NOT NULL,
-  `Parcelas` int unsigned NOT NULL DEFAULT '0',
+  `Parcelas` int unsigned NOT NULL DEFAULT '1',
   `TpLancto` char(1) COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
@@ -926,4 +926,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-24 14:42:08
+-- Dump completed on 2024-04-20  9:30:22

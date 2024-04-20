@@ -11,7 +11,7 @@ export async function insert(lancto) {
         }
 
         const result = await db.query(
-            'set @id = null; set @idLote = ?; call InsertLancto(?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote',
+            'set @id=null; set @idLote=?; call InsertLancto(?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote',
             [lancto.idConta, lancto.descricao, lancto.vlLancto, lancto.dtVencto,
             lancto.parcelas, lancto.intervalo, lancto.diasUteis]);
 
@@ -56,17 +56,47 @@ export async function exclude(id, parcela) {
     }
 }
 
+export async function close(lancto) {
+    if (!lancto) {
+        return { status: -1, 'msg': 'Registro não informado' };
+    }
+
+    try {
+        await db.query('call CloseLancto(?,?,?,?)', [lancto.id, lancto.dtPagto, lancto.vlAcrescimo, lancto.vlDesconto]);
+        return { status: 0, 'msg': 'ok' };
+    } catch (err) {
+        logger.info(`close /Lancto/${lancto.id} - ${err.sqlMessage}`);
+        return { status: err.sqlState, 'msg': err.sqlMessage };
+    }
+}
+
+export async function reopen(id) {
+    id = parseInt(id);
+
+    if (isNaN(id)) {
+        return { status: -1, 'msg': 'id inválido' };
+    }
+
+    try {
+        await db.query('call ReopenLancto(?)', [Id]);
+        return { status: 0, 'msg': 'ok' };
+    } catch (err) {
+        logger.info(`reopen /Lancto/${id} - ${err.sqlMessage}`);
+        return { status: err.sqlState, 'msg': err.sqlMessage };
+    }
+}
+
 const selectSQL =
-    'SELECT l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`, l.`IdLote`, l.`TpLancto`,\n' +
-    '       l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`,\n' +
-    '       li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`\n' +
-    'FROM`contas_dev`.`lancto` l\n' +
-    'INNER JOIN`contas_dev`.`lanctoitens` li\n' +
-    'ON li.`IdLancto` = l.`Id`\n' +
-    'INNER JOIN`contas_dev`.`conta` c\n' +
-    'ON c.`Id` = l.`IdConta`\n' +
-    'WHERE l.Id = ?\n' +
-    'ORDER BY li.DtVencto, l.Descricao';
+    'SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`,\n' +
+    '       l.`IdLote`, l.`TpLancto`,l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`,\n' +
+    '       li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`,\n' +
+    '       li.`VlDesconto`, li.`VlTotal`\n' +
+    'FROM `lancto` l\n' +
+    'INNER JOIN `lanctoitens` li\n' +
+    '  ON li.`IdLancto`=l.`Id`\n' +
+    'INNER JOIN`conta` c\n' +
+    '  ON c.`Id`=l.`IdConta`\n' +
+    'WHERE l.Id=?';
 
 function mapLancto(lancto) {
     return {
@@ -89,7 +119,35 @@ function mapLancto(lancto) {
     };
 }
 
-export async function getAll(crit) {
+export async function getAll() {
+    try {
+        var sql = selectSQL.replace('{t}', '0')
+            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto>DATE(CURRENT_TIMESTAMP)\nUNION\n');
+
+        sql += selectSQL.replace('{t}', '1')
+            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto=DATE(CURRENT_TIMESTAMP)\nUNION\n');
+
+        sql += selectSQL.replace('{t}', '2')
+            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto<DATE(CURRENT_TIMESTAMP)\nUNION\n');
+
+        sql += selectSQL.replace('{t}', '3')
+            .replace('l.Id=?', 'li.FlPago=1\n');
+
+        sql += 'ORDER BY Tipo, DtVencto, Descricao';
+
+        const pars = [];
+        const [results, _] = await db.query(sql, pars);
+
+        return results.map((result) => {
+            return mapLancto(result);
+        });
+    } catch (err) {
+        logger.info(`get /Lancto - ${err.sqlMessage}`);
+        return { status: err.sqlState, 'msg': err.sqlMessage };
+    }
+}
+
+export async function getAllByCriter(crit) {
     try {
         var sql = selectSQL + ''; // Para fazer uma cópia, e não criar um referência
         const pars = [];
@@ -100,15 +158,24 @@ export async function getAll(crit) {
 
         switch (crit.toLowerCase().substring(0, 1)) {
             case 'a': // a vencer
-                sql = sql.replace('l.Id = ?', 'li.FlPago = 0 AND li.DtVencto >= DATE(CURRENT_TIMESTAMP)');
+                sql = sql.replace('{t}', '0')
+                    .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto > DATE(CURRENT_TIMESTAMP)');
+                break;
+            case 'n': // vencendo
+                sql = sql.replace('{t}', '1')
+                    .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto=DATE(CURRENT_TIMESTAMP)');
                 break;
             case 'v': // vencidos
-                sql = sql.replace('l.Id = ?', 'li.FlPago = 0 AND li.DtVencto < DATE(CURRENT_TIMESTAMP)');
+                sql = sql.replace('{t}', '2')
+                    .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto < DATE(CURRENT_TIMESTAMP)');
                 break;
             default: // pagos
-                sql = sql.replace('l.Id = ?', 'li.FlPago = 1');
+                sql = sql.replace('{t}', '3')
+                    .replace('l.Id=?', 'li.FlPago=1');
                 break;
         }
+
+        sql += 'ORDER BY li.DtVencto, l.Descricao'
 
         const [results, _] = await db.query(sql, pars);
 
@@ -140,7 +207,7 @@ export async function getByIdPai(id) {
     }
 
     try {
-        const [results, _] = await db.query(selectSQL.replace('WHERE l.Id = ?\n', ''));
+        const [results, _] = await db.query(selectSQL.replace('WHERE l.Id=?', ''));
 
         return results.map((result) => {
             return mapLancto(result);
@@ -160,7 +227,7 @@ export async function getByIdParcela(id, parcela) {
         }
 
         try {
-            const [results, _] = await db.query(selectSQL.replace('= ?', '= ? AND li.Parcela = ?'), [id, parcela]);
+            const [results, _] = await db.query(selectSQL.replace('=?', '=? AND li.Parcela=?'), [id, parcela]);
 
             return mapLancto(results[0]);
         } catch (err) {
@@ -170,7 +237,7 @@ export async function getByIdParcela(id, parcela) {
     }
 
     try {
-        const [results, _] = await db.query(selectSQL.replace('WHERE l.Id = ?\n', ''));
+        const [results, _] = await db.query(selectSQL.replace('WHERE l.Id=?\n', ''));
 
         return results.map((result) => {
             return mapLancto(result);
@@ -209,36 +276,6 @@ export async function getByIdLote(id) {
         });
     } catch (err) {
         logger.info(`get /Lancto/Tipo/${id} - ${err.sqlMessage}`);
-        return { status: err.sqlState, 'msg': err.sqlMessage };
-    }
-}
-
-export async function close(lancto) {
-    if (!lancto) {
-        return { status: -1, 'msg': 'Registro não informado' };
-    }
-
-    try {
-        await db.query('call CloseLancto(?,?,?,?)', [lancto.id, lancto.dtPagto, lancto.vlAcrescimo, lancto.vlDesconto]);
-        return { status: 0, 'msg': 'ok' };
-    } catch (err) {
-        logger.info(`close /Lancto/${lancto.id} - ${err.sqlMessage}`);
-        return { status: err.sqlState, 'msg': err.sqlMessage };
-    }
-}
-
-export async function reopen(id) {
-    id = parseInt(id);
-
-    if (isNaN(id)) {
-        return { status: -1, 'msg': 'id inválido' };
-    }
-
-    try {
-        await db.query('call ReopenLancto(?)', [Id]);
-        return { status: 0, 'msg': 'ok' };
-    } catch (err) {
-        logger.info(`reopen /Lancto/${id} - ${err.sqlMessage}`);
         return { status: err.sqlState, 'msg': err.sqlMessage };
     }
 }

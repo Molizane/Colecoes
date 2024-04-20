@@ -230,7 +230,7 @@ export default function Lancto() {
                 </div>
             </div>
             <div style={{ height: '75vh', overflowY: 'scroll' }}>
-                <div className='row'>
+                {/* <div className='row'>
                     <div className='col-3'>
                         Descrição
                     </div>
@@ -240,7 +240,7 @@ export default function Lancto() {
                     <div className='col-3'>
                         Valor
                     </div>
-                </div>
+                </div> */}
                 <div className='row row-cols-md-5 m-0'>
                     {
                         !isLoading && filtrados && filtrados.map(lancto => (
