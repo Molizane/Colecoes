@@ -99,52 +99,69 @@ const selectSQL =
     'WHERE l.Id=?';
 
 function mapLancto(lancto) {
-    return {
-        id: lancto.Id,
-        idConta: lancto.IdConta,
-        conta: lancto.Conta,
-        descricao: lancto.Descricao,
-        idLote: lancto.IdLote,
-        tpLancto: lancto.TpLancto,
-        flgDiasUteis: lancto.FlgDiasUteis,
-        parcelas: lancto.Parcelas,
-        parcela: lancto.Parcela,
-        dtVencto: lancto.DtVencto,
-        vlLancto: lancto.VlLancto,
-        flPago: lancto.FlPago != 0,
-        dtPagto: lancto.DtPagto,
-        vlAcrescimo: lancto.VlAcrescimo,
-        vlDesconto: lancto.VlDesconto,
-        vlTotal: lancto.VlTotal,
-    };
+  return {
+    status: lancto.Status,
+    tipo: lancto.Tipo,
+    id: lancto.Id,
+    idConta: lancto.IdConta,
+    conta: lancto.Conta,
+    descricao: lancto.Descricao,
+    idLote: lancto.IdLote,
+    tpLancto: lancto.TpLancto,
+    flgDiasUteis: lancto.FlgDiasUteis,
+    parcelas: lancto.Parcelas,
+    parcela: lancto.Parcela,
+    dtVencto: lancto.DtVencto,
+    vlLancto: lancto.VlLancto,
+    flPago: lancto.FlPago != 0,
+    dtPagto: lancto.DtPagto,
+    vlAcrescimo: lancto.VlAcrescimo,
+    vlDesconto: lancto.VlDesconto,
+    vlTotal: lancto.VlTotal,
+    descrParcela:
+      lancto.Parcelas == 1 ? "" : ` (${lancto.Parcela}/${lancto.Parcelas})`,
+  };
 }
 
 export async function getAll() {
-    try {
-        var sql = selectSQL.replace('{t}', '0')
-            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto>DATE(CURRENT_TIMESTAMP)\nUNION\n');
+  try {
+    var sql = selectSQL
+      .replace("{t}", "2 AS Status, 'A vencer'")
+      .replace(
+        "l.Id=?",
+        "li.FlPago=0 AND li.DtVencto>DATE(CURRENT_TIMESTAMP)\nUNION\n"
+      );
 
-        sql += selectSQL.replace('{t}', '1')
-            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto=DATE(CURRENT_TIMESTAMP)\nUNION\n');
+    sql += selectSQL
+      .replace("{t}", "1 AS Status, 'Vencendo'")
+      .replace(
+        "l.Id=?",
+        "li.FlPago=0 AND li.DtVencto=DATE(CURRENT_TIMESTAMP)\nUNION\n"
+      );
 
-        sql += selectSQL.replace('{t}', '2')
-            .replace('l.Id=?', 'li.FlPago=0 AND li.DtVencto<DATE(CURRENT_TIMESTAMP)\nUNION\n');
+    sql += selectSQL
+      .replace("{t}", "0 AS Status, 'Vencido'")
+      .replace(
+        "l.Id=?",
+        "li.FlPago=0 AND li.DtVencto<DATE(CURRENT_TIMESTAMP)\nUNION\n"
+      );
 
-        sql += selectSQL.replace('{t}', '3')
-            .replace('l.Id=?', 'li.FlPago=1\n');
+    sql += selectSQL
+      .replace("{t}", "3 AS Status, 'Pago'")
+      .replace("l.Id=?", "li.FlPago=1\n");
 
-        sql += 'ORDER BY Tipo, DtVencto, Descricao';
+    sql += "ORDER BY Status, DtVencto, Tipo, Descricao";
 
-        const pars = [];
-        const [results, _] = await db.query(sql, pars);
+    const pars = [];
+    const [results, _] = await db.query(sql, pars);
 
-        return results.map((result) => {
-            return mapLancto(result);
-        });
-    } catch (err) {
-        logger.info(`get /Lancto - ${err.sqlMessage}`);
-        return { status: err.sqlState, 'msg': err.sqlMessage };
-    }
+    return results.map((result) => {
+      return mapLancto(result);
+    });
+  } catch (err) {
+    logger.info(`get /Lancto - ${err.sqlMessage}`);
+    return { status: err.sqlState, msg: err.sqlMessage };
+  }
 }
 
 export async function getAllByCriter(crit) {

@@ -35,3 +35,14 @@ export function trataErrosApi(erro) {
         }
     };
 }
+
+export function strDate(dt) {
+  return dt.substr(0, 10).split("-").reverse().join("/");
+}
+
+export function strValue(vl) {
+  return vl.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

@@ -1,9 +1,9 @@
-import http from './http-common';
-import { trataErrosApi } from '../functions/utils'
+import http from "./http-common";
+import { trataErrosApi } from "../functions/utils";
 
 const create = async (data) => {
   try {
-    return await http.post('/tipoconta', data);
+    return await http.post("/tipoconta", data);
   } catch (ex) {
     return trataErrosApi(ex);
   }
@@ -27,7 +27,7 @@ const remove = async (id) => {
 
 const getAll = async () => {
   try {
-    return await http.get('/tipoconta');
+    return await http.get("/tipoconta");
   } catch (ex) {
     return trataErrosApi(ex);
   }

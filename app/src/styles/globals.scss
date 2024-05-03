@@ -59,6 +59,13 @@ input[type=checkbox] {
   cursor: pointer;
 }
 
+.btn-refresh {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+}
+
 .modal-content {
   background: #bbbbbb;
 }

@@ -1,27 +1,51 @@
 .container {
-    height: 80vh;
+  height: 80vh;
 }
 
 .titulo {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    padding-left: 10px;
-    width: 100%
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-left: 10px;
+  width: 100%;
 }
 
 .titulo2 {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .divContador {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .contador {
-    font-size: 0.8rem;
+  font-size: 0.8rem;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.funcoes {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-items: center;
+  justify-content: space-between;
+  padding-right: 5px;;
+}
+
+.refresh {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.spanTipos {
+  margin-right: 5px;
 }
