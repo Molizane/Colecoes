@@ -5,11 +5,14 @@ import Card from "../../components/Card";
 import CenteredModal from "../../components/ModalDialog";
 
 import servicoConta from "../../services/ContaService";
-import servico from "../../services/TipoContaService";
+import servicoTipo from "../../services/TipoContaService";
 
 import styles from "./styles.module.scss";
+import { themeColors } from "../../functions/utils";
 
 export default function Conta() {
+  const theme = themeColors();
+
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
   const [status, setStatus] = useState("list");
@@ -38,13 +41,13 @@ export default function Conta() {
 
   const errPopup = function (msg) {
     setTitulo("Erro");
-    setCorTitulo("red");
+    setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
     setMessageShow(true);
   };
 
   const getAllTipos = async () => {
-    const response = await servico.getAll();
+    const response = await servicoTipo.getAll();
 
     if (response.data.msg) {
       errPopup(response.data.msg);
@@ -61,7 +64,7 @@ export default function Conta() {
         });
       });
 
-      setTipos([{ key: "", value: "Selecione um Tipo de Conta" }, ...results]);
+      setTipos([{ key: "", value: "Selecione um tipo de conta" }, ...results]);
     }
   };
 
@@ -76,29 +79,6 @@ export default function Conta() {
     setContas(response.data);
     filtraContas(response.data, filtro, filtraTipo);
     setIsLoading(false);
-  };
-
-  useEffect(() => {
-    getAllTipos();
-
-    //console.log('page_load');
-    // Título da aba
-    // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Contas`;
-    document.title = "Contas";
-  }, []);
-
-  useEffect(() => {
-    getAll();
-  }, [refresh]);
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setConta({ ...conta, [name]: value });
-    setLenDescricao(value.length);
-  };
-
-  const handleSelectChange = (event) => {
-    setConta({ ...conta, idTipoConta: event.target.value });
   };
 
   const filtraContas = (contas, filtro, filtraTipo) => {
@@ -122,17 +102,40 @@ export default function Conta() {
     setTiposDistintos(tiposDistintos);
   };
 
+  useEffect(() => {
+    //console.log('page_load');
+    // Título da aba
+    // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Contas`;
+    document.title = "Contas";
+  }, []);
+
+  useEffect(() => {
+    console.log("page_refresh");
+    getAllTipos();
+    getAll();
+  }, [refresh]);
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setConta({ ...conta, [name]: value });
+    setLenDescricao(value.length);
+  };
+
   const handleFilterChange = (event) => {
     var txt = event.target.value.trim();
     setFiltro(txt);
     filtraContas(contas, txt, filtraTipo);
   };
 
+  const handleTipoContaChange = (event) => {
+    setConta({ ...conta, idTipoConta: event.target.value });
+  };
+
   const handleCreate = async function () {
     setConta({ id: null, descricao: "", idTipoConta: "" });
     setStatus("create");
     setTituloCRUD("Inclusão");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(0);
     setModalCRUDShow(true);
   };
@@ -142,7 +145,7 @@ export default function Conta() {
     setConta(reg);
     setStatus("edit");
     setTituloCRUD("Alteração");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(reg.descricao.length);
     setModalCRUDShow(true);
   };
@@ -151,7 +154,7 @@ export default function Conta() {
     setId(id);
     setStatus("delete");
     setTituloCRUD("Atenção!");
-    setCorTituloCRUD("#ff0000");
+    setCorTituloCRUD(theme.colors.tomato11);
     setModalCRUDShow(true);
   };
 
@@ -277,12 +280,12 @@ export default function Conta() {
                               titulo1="Tipo"
                               linha1={`${conta.tipoConta}`}
                               linha2={conta.descricao}
-                              color="white"
-                              bgColor="#3f3f3f"
-                              delColor="white"
-                              bgDelColor="red"
-                              editColor="white"
-                              bgEditColor="green"
+                              color={theme.colors.gray1}
+                              bgColor={theme.colors.gray11}
+                              delColor={theme.colors.gray1}
+                              bgDelColor={theme.colors.tomato11}
+                              editColor={theme.colors.gray1}
+                              bgEditColor={theme.colors.green11}
                               onEdit={handleEdit}
                               onDelete={handleDelete}
                             />
@@ -300,7 +303,7 @@ export default function Conta() {
         titulo={titulo}
         corTitulo={corTitulo}
         conteudo={texto}
-        corConteudo="#515151"
+        corConteudo={theme.colors.gray11}
         closeButton={true}
         eye={true}
         show={messageShow}
@@ -312,7 +315,7 @@ export default function Conta() {
         backdrop="static"
         titulo={tituloCRUD}
         corTitulo={corTituloCRUD}
-        corConteudo="white"
+        corConteudo={theme.colors.gray1}
         closeButton={false}
         thumbsUp={status === "delete"}
         thumbsDown={status === "delete"}
@@ -352,7 +355,7 @@ export default function Conta() {
                 <select
                   className="form-control"
                   value={conta.idTipoConta}
-                  onChange={handleSelectChange}
+                  onChange={handleTipoContaChange}
                 >
                   {tipos.map((tipo) => {
                     const { key, value } = tipo;

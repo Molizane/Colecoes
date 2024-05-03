@@ -42,11 +42,11 @@ const get = async (id) => {
 };
 
 const exportedObject = {
-    create,
-    update,
-    remove,
-    getAllLanctos: getAll,
-    get,
+  create,
+  update,
+  remove,
+  getAll,
+  get,
 };
 
 export default exportedObject;

@@ -1,39 +1,50 @@
+import {
+  gray,
+  red,
+  green,
+  blue,
+  tomato,
+  yellow,
+  amber,
+  cyan,
+} from "@radix-ui/colors";
+
 export function trataErrosApi(erro) {
-    //console.log(erro);
+  //console.log(erro);
 
-    if (erro.response && erro.response.data && erro.response.data.msg) {
-        return {
-            data: {
-                id: -1,
-                msg: erro.response.data.msg,
-            }
-        };
-    }
-
-    if (erro.msg) {
-        return {
-            data: {
-                id: -1,
-                msg: erro.msg,
-            }
-        };
-    }
-
-    if (erro.message) {
-        return {
-            data: {
-                id: -1,
-                msg: erro.message,
-            }
-        };
-    }
-
+  if (erro.response && erro.response.data && erro.response.data.msg) {
     return {
-        data: {
-            id: -1,
-            msg: 'Erro desconhecido',
-        }
+      data: {
+        id: -1,
+        msg: erro.response.data.msg,
+      },
     };
+  }
+
+  if (erro.msg) {
+    return {
+      data: {
+        id: -1,
+        msg: erro.msg,
+      },
+    };
+  }
+
+  if (erro.message) {
+    return {
+      data: {
+        id: -1,
+        msg: erro.message,
+      },
+    };
+  }
+
+  return {
+    data: {
+      id: -1,
+      msg: "Erro desconhecido",
+    },
+  };
 }
 
 export function strDate(dt) {
@@ -45,4 +56,19 @@ export function strValue(vl) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function themeColors() {
+  return {
+    colors: {
+      ...gray,
+      ...red,
+      ...green,
+      ...blue,
+      ...tomato,
+      ...yellow,
+      ...amber,
+      ...cyan,
+    },
+  };
 }

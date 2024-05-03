@@ -4,8 +4,11 @@ import styles from "./styles.module.scss";
 import Card from "../../components/Card";
 import CenteredModal from "../../components/ModalDialog";
 import { FiPlus } from "react-icons/fi";
+import { themeColors } from "../../functions/utils";
 
 export default function TipoConta() {
+  const theme = themeColors();
+
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
   const [status, setStatus] = useState("list");
@@ -31,7 +34,7 @@ export default function TipoConta() {
 
   const errPopup = function (msg) {
     setTitulo("Erro");
-    setCorTitulo("red");
+    setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
     setMessageShow(true);
   };
@@ -39,8 +42,8 @@ export default function TipoConta() {
   const getAll = async () => {
     const response = await servico.getAll();
 
-    if (response.data.message) {
-      errPopup(response.data.message);
+    if (response.data.msg) {
+      errPopup(response.data.msg);
       return;
     }
 
@@ -97,7 +100,7 @@ export default function TipoConta() {
     setTipo({ id: null, descricao: "" });
     setStatus("create");
     setTituloCRUD("Inclusão");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(0);
     setModalCRUDShow(true);
   };
@@ -107,7 +110,7 @@ export default function TipoConta() {
     setTipo(reg);
     setStatus("edit");
     setTituloCRUD("Alteração");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(reg.descricao.length);
     setModalCRUDShow(true);
   };
@@ -116,7 +119,7 @@ export default function TipoConta() {
     setId(id);
     setStatus("delete");
     setTituloCRUD("Atenção!");
-    setCorTituloCRUD("#ff0000");
+    setCorTituloCRUD(theme.colors.tomato11);
     setModalCRUDShow(true);
   };
 
@@ -213,12 +216,12 @@ export default function TipoConta() {
                   id={tipo.id}
                   qtde={tipo.qtde}
                   linha2={tipo.descricao}
-                  color="white"
-                  bgColor="#3f3f3f"
-                  delColor="white"
-                  bgDelColor="red"
-                  editColor="white"
-                  bgEditColor="green"
+                  color={theme.colors.gray1}
+                  bgColor={theme.colors.gray11}
+                  delColor={theme.colors.gray1}
+                  bgDelColor={theme.colors.tomato11}
+                  editColor={theme.colors.gray1}
+                  bgEditColor={theme.colors.green11}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
@@ -232,7 +235,7 @@ export default function TipoConta() {
         titulo={titulo}
         corTitulo={corTitulo}
         conteudo={texto}
-        corConteudo="#515151"
+        corConteudo={theme.colors.gray11}
         closeButton={true}
         eye={true}
         show={messageShow}
@@ -244,7 +247,7 @@ export default function TipoConta() {
         backdrop="static"
         titulo={tituloCRUD}
         corTitulo={corTituloCRUD}
-        corConteudo="white"
+        corConteudo={theme.colors.gray1}
         closeButton={false}
         thumbsUp={status === "delete"}
         thumbsDown={status === "delete"}

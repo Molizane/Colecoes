@@ -1,21 +1,11 @@
 import { useEffect, useState } from "react";
 import { FaArrowsRotate } from "react-icons/fa6";
-import {
-  gray,
-  blue,
-  red,
-  green,
-  yellow,
-  white,
-  tomato,
-  amber,
-} from "@radix-ui/colors";
 import { Tooltip } from "react-tooltip";
 
 import CenteredModal from "../../components/ModalDialog";
 import servicoLancto from "../../services/LanctoService";
-import servicoconta from "../../services/ContaService";
-import { strDate, strValue } from "../../functions/utils";
+import servicoConta from "../../services/ContaService";
+import { strDate, strValue, themeColors } from "../../functions/utils";
 
 import styles from "./styles.module.scss";
 
@@ -26,18 +16,11 @@ import { BsFillTrash3Fill } from "react-icons/bs";
 import { MdPriceCheck, MdOutlineMoneyOff } from "react-icons/md";
 
 export default function Lancto() {
-  const theme = {
-    colors: {
-      ...gray,
-      ...blue,
-      ...red,
-      ...green,
-      ...yellow,
-      ...white,
-      ...tomato,
-      ...amber,
-    },
-  };
+  const theme = themeColors();
+  const tomatoGridColors = [theme.colors.tomato5, theme.colors.tomato8];
+  const amberGridColors = [theme.colors.amber5, theme.colors.amber8];
+  const greenGridColors = [theme.colors.green5, theme.colors.green8];
+  const cyanGridColors = [theme.colors.cyan5, theme.colors.cyan8];
 
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
@@ -67,13 +50,13 @@ export default function Lancto() {
 
   const errPopup = function (msg) {
     setTitulo("Erro");
-    setCorTitulo("red");
+    setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
     setMessageShow(true);
   };
 
   const getAllContas = async () => {
-    const response = await servicoconta.getAll();
+    const response = await servicoConta.getAll();
 
     if (response.data.msg) {
       errPopup(response.data.msg);
@@ -91,14 +74,14 @@ export default function Lancto() {
       });
 
       setContas([
-        { key: "", value: "Selecione um Conta de Lançamento" },
+        { key: "", value: "Selecione uma conta de lançamento" },
         ...results,
       ]);
     }
   };
 
-  const getAllLanctos = async () => {
-    const response = await servicoLancto.getAllLanctos(criterio);
+  const getAll = async () => {
+    const response = await servicoLancto.getAll(criterio);
 
     if (response.data.msg) {
       errPopup(response.data.msg);
@@ -108,25 +91,6 @@ export default function Lancto() {
     setLanctos(response.data);
     filtraLanctos(response.data, filtro, filtraConta);
     setIsLoading(false);
-  };
-
-  useEffect(() => {
-    //console.log('page_load');
-    // Título da aba
-    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
-    document.title = "Lançamentos";
-  }, []);
-
-  useEffect(() => {
-    console.log("page_refresh");
-    getAllContas();
-    getAllLanctos();
-  }, [refresh]);
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setLancto({ ...lancto, [name]: value });
-    setLenDescricao(value.length);
   };
 
   const filtraLanctos = (lanctos, filtro, filtraConta) => {
@@ -146,6 +110,25 @@ export default function Lancto() {
     setFiltrados(lanctos);
   };
 
+  useEffect(() => {
+    //console.log('page_load');
+    // Título da aba
+    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
+    document.title = "Lançamentos";
+  }, []);
+
+  useEffect(() => {
+    console.log("page_refresh");
+    getAllContas();
+    getAll();
+  }, [refresh]);
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setLancto({ ...lancto, [name]: value });
+    setLenDescricao(value.length);
+  };
+
   const handleFilterChange = (event) => {
     var txt = event.target.value.trim();
     setFiltro(txt);
@@ -156,7 +139,7 @@ export default function Lancto() {
     setLancto({ id: null, descricao: "", idContaLancto: "" });
     setStatus("create");
     setTituloCRUD("Inclusão");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(0);
     setModalCRUDShow(true);
   };
@@ -166,7 +149,7 @@ export default function Lancto() {
     setLancto(reg);
     setStatus("edit");
     setTituloCRUD("Alteração");
-    setCorTituloCRUD("blue");
+    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(reg.descricao.length);
     setModalCRUDShow(true);
   };
@@ -175,7 +158,7 @@ export default function Lancto() {
     setId(id);
     setStatus("delete");
     setTituloCRUD("Atenção!");
-    setCorTituloCRUD(theme.colors.red11);
+    setCorTituloCRUD(theme.colors.tomato11);
     setModalCRUDShow(true);
   };
 
@@ -269,6 +252,7 @@ export default function Lancto() {
               />
               <input
                 type="search"
+                className={styles.search}
                 placeholder="Filtro.."
                 name="filtro"
                 maxLength={45}
@@ -287,7 +271,7 @@ export default function Lancto() {
           effect="solid"
           style={{
             backgroundColor: theme.colors.blue10,
-            color: theme.colors.white12,
+            color: theme.colors.gray1,
           }}
         />
 
@@ -328,33 +312,37 @@ export default function Lancto() {
       >
         {!isLoading &&
           filtrados &&
-          filtrados.map((lancto) => {
+          filtrados.map((lancto, index) => {
             var style = "";
 
             if (lancto.status == 0) {
               // Vencido
               style = {
-                backgroundColor: theme.colors.tomato8,
+                //backgroundColor: theme.colors.tomato8,
+                backgroundColor: tomatoGridColors[index % 2],
                 color: theme.colors.gray11,
                 fontWeight: "bold",
               };
             } else if (lancto.status == 1) {
               // Vencendo
               style = {
-                backgroundColor: theme.colors.amber3,
+                //backgroundColor: theme.colors.amber3,
+                backgroundColor: amberGridColors[index % 2],
                 color: theme.colors.gray11,
                 fontWeight: "bold",
               };
             } else if (lancto.status == 2) {
               // A vencer
               style = {
-                backgroundColor: theme.colors.green6,
+                //backgroundColor: theme.colors.green6,
+                backgroundColor: greenGridColors[index % 2],
                 color: theme.colors.gray11,
               };
             } else {
               // Pago
               style = {
-                backgroundColor: theme.colors.gray3,
+                //backgroundColor: theme.colors.gray3,
+                backgroundColor: cyanGridColors[index % 2],
                 color: theme.colors.gray11,
               };
             }
@@ -416,7 +404,7 @@ export default function Lancto() {
         titulo={titulo}
         corTitulo={corTitulo}
         conteudo={texto}
-        corConteudo="#515151"
+        corConteudo={theme.colors.gray8}
         closeButton={true}
         eye={true}
         show={messageShow}
@@ -428,7 +416,7 @@ export default function Lancto() {
         backdrop="static"
         titulo={tituloCRUD}
         corTitulo={corTituloCRUD}
-        corConteudo="white"
+        corConteudo={theme.colors.gray1}
         closeButton={false}
         thumbsUp={status === "delete"}
         thumbsDown={status === "delete"}
