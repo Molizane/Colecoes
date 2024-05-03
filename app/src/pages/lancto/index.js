@@ -260,7 +260,7 @@ export default function Lancto() {
               </button>
             </div>
             <div>
-              <span className={styles.spanTipos}>Incluir tipos no filtro</span>
+              <span className={styles.spanTipos}>Incluir conta no filtro</span>
               <input
                 className={styles.spanTipos}
                 type="checkbox"

@@ -232,7 +232,7 @@ export default function Conta() {
               </button>
             </div>
             <div>
-              <span className={styles.spanTipos}>Incluir tipos no filtro</span>
+              <span className={styles.spanTipos}>Incluir tipo no filtro</span>
               <input
                 className={styles.spanTipos}
                 type="checkbox"
