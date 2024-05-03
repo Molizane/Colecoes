@@ -71,6 +71,7 @@ export default function TipoConta() {
   }, []);
 
   useEffect(() => {
+    //console.log("page_refresh");
     getAll();
   }, [refresh]);
 
@@ -265,13 +266,13 @@ export default function TipoConta() {
                 Descrição
               </label>
               <input
+                name="descricao"
+                id="descricao"
                 type="text"
                 className="form-control"
-                id="descricao"
                 required
                 value={tipo.descricao}
                 onChange={handleInputChange}
-                name="descricao"
                 maxLength={45}
                 autoFocus
               />

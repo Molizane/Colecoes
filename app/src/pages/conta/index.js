@@ -110,7 +110,7 @@ export default function Conta() {
   }, []);
 
   useEffect(() => {
-    console.log("page_refresh");
+    //console.log("page_refresh");
     getAllTipos();
     getAll();
   }, [refresh]);
@@ -333,13 +333,13 @@ export default function Conta() {
                 Descrição
               </label>
               <input
+                name="descricao"
+                id="descricao"
                 type="text"
                 className="form-control"
-                id="descricao"
                 required
                 value={conta.descricao}
                 onChange={handleInputChange}
-                name="descricao"
                 maxLength={45}
                 autoFocus
               />
@@ -348,12 +348,14 @@ export default function Conta() {
               <span className={styles.contador}>{lenDescricao}</span>
             </div>
             <div className="form-group">
-              <label htmlFor="tipo" className="control-label">
+              <label htmlFor="conta" className="control-label">
                 Tipo de Conta
               </label>
               {status === "create" && (
                 <select
                   className="form-control"
+                  id="conta"
+                  name="conta"
                   value={conta.idTipoConta}
                   onChange={handleTipoContaChange}
                 >

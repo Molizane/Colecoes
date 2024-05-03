@@ -4,16 +4,19 @@ TRUNCATE TABLE `contas_dev`.`lancto`;
 TRUNCATE TABLE `contas_dev`.`lote`;
 */
 
--- SELECT l.`Id`, l.`IdConta`, l.`Descricao`, l.`DtLancto`, l.`IdLote`, l.`Parcelas`, l.`TpLancto`, l.`FlgDiasUteis`
--- FROM `contas_dev`.`lancto` l
--- ORDER BY l.`IdLote`;
-
--- SELECT li.`IdLancto`, li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
--- FROM `contas_dev`.`lanctoitens` li
--- ORDER BY li.`IdLancto`, li.`DtVencto`;
-
 SELECT l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`, l.`DtLancto`, l.`IdLote`, l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`
      , li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
+     , case l.`TpLancto`
+         WHEN 'S' THEN 'Semanal'
+         WHEN 'Q' THEN 'Quinzenal'
+         WHEN 'M' THEN 'Mensal'
+         WHEN 'B' THEN 'Bimestral'
+         WHEN 'T' THEN 'Trimestral'
+         WHEN '4' THEN 'Quadrimestral'
+         WHEN '6' THEN 'Semestral'
+         WHEN 'A' THEN 'Anual'
+         ELSE l.`TpLancto`
+       end AS `DescrTipo`
 FROM `contas_dev`.`lancto` l
 INNER JOIN `contas_dev`.`lanctoitens` li
 ON li.`IdLancto` = l.`Id`
