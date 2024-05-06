@@ -28,80 +28,95 @@ interface CenteredModalProps {
 }
 
 export default function CenteredModal({
-    backdrop,
-    titulo, corTitulo,
-    children, conteudo, corConteudo: corTexto,
-    tamanho,
-    closeButton,
-    thumbsUp, thumbsDown, floppy, eye, cancel,
-    show,
-    warning,
-    onConfirm, onHide }: CenteredModalProps) {
-    if (!corTitulo) {
-        corTitulo = 'black';
-    }
+  backdrop,
+  titulo,
+  corTitulo,
+  children,
+  conteudo,
+  corConteudo,
+  tamanho,
+  closeButton,
+  thumbsUp,
+  thumbsDown,
+  floppy,
+  eye,
+  cancel,
+  show,
+  warning,
+  onConfirm,
+  onHide,
+}: CenteredModalProps) {
+  if (!corTitulo) {
+    corTitulo = "black";
+  }
 
-    if (!corTexto) {
-        corTexto = 'black';
-    }
+  if (!corConteudo) {
+    corConteudo = "black";
+  }
 
-    const bg = {
-        overlay: {
-            background: 'yellow'
-        }
-    };
+  const bg = {
+    overlay: {
+      background: "yellow",
+    },
+  };
 
-    return (
-        <>
-            <style jsx>
-                {`
-                .corTitulo {
-                    color: ${corTitulo};
-                }
-                .corTexto {
-                    color: ${corTexto};
-                }
-                `}
-            </style>
+  return (
+    <>
+      <style jsx>
+        {`
+          .corTitulo {
+            color: ${corTitulo};
+          }
+          .corConteudo {
+            color: ${corConteudo};
+          }
+        `}
+      </style>
 
-            <Modal
-                backdrop={backdrop}
-                show={show}
-                onHide={onHide}
-                size={tamanho || 'sm'}
-                aria-labelledby='contained-modal-title'
-                centered>
-                <Modal.Header closeButton={closeButton} className='corFundoTitulo'>
-                    <Modal.Title id='contained-modal-title'>
-                        <span className='corTitulo'>{titulo}</span>
-                    </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <span className='corTexto'>{children || conteudo}</span>
-                </Modal.Body>
-                <Modal.Footer>
-                    {
-                        thumbsUp &&
-                        <Button variant="primary" onClick={onConfirm}><BsHandThumbsUpFill /></Button>
-                    }
-                    {
-                        floppy &&
-                        <Button variant="primary" onClick={onConfirm}><BsFloppyFill /></Button>
-                    }
-                    {
-                        thumbsDown &&
-                        <Button variant="secondary" onClick={onHide}><BsHandThumbsDownFill /></Button>
-                    }
-                    {
-                        eye &&
-                        <Button variant="secondary" onClick={onHide}><BsFillEyeSlashFill /></Button>
-                    }
-                    {
-                        cancel &&
-                        <Button variant="secondary" onClick={onHide}><AiOutlineClose /></Button>
-                    }
-                </Modal.Footer>
-            </Modal >
-        </>
-    );
+      <Modal
+        backdrop={backdrop}
+        show={show}
+        onHide={onHide}
+        size={tamanho}
+        aria-labelledby="contained-modal-title"
+        centered
+      >
+        <Modal.Header closeButton={closeButton} className="corFundoTitulo">
+          <Modal.Title id="contained-modal-title">
+            <span className="corTitulo">{titulo}</span>
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <span className="corConteudo">{children || conteudo}</span>
+        </Modal.Body>
+        <Modal.Footer>
+          {thumbsUp && (
+            <Button variant="primary" onClick={onConfirm}>
+              <BsHandThumbsUpFill />
+            </Button>
+          )}
+          {floppy && (
+            <Button variant="primary" onClick={onConfirm}>
+              <BsFloppyFill />
+            </Button>
+          )}
+          {thumbsDown && (
+            <Button variant="secondary" onClick={onHide}>
+              <BsHandThumbsDownFill />
+            </Button>
+          )}
+          {eye && (
+            <Button variant="secondary" onClick={onHide}>
+              <BsFillEyeSlashFill />
+            </Button>
+          )}
+          {cancel && (
+            <Button variant="secondary" onClick={onHide}>
+              <AiOutlineClose />
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
 }

@@ -58,10 +58,16 @@ router.put("/", async (req, res, next) => {
   }
 });
 
-router.delete("/:id/:parcela", async (req, res, next) => {
+router.delete("/:id/:parcela/:tipo", async (req, res, next) => {
   try {
-    logger.info(`DELETE /lancto/${req.params.id}/${req.params.parcela}`);
-    const result = await exclude(req.params.id, req.params.parcela);
+    logger.info(
+      `DELETE /lancto/${req.params.id}/${req.params.parcela}/${req.params.tipo}`
+    );
+    const result = await exclude(
+      req.params.id,
+      req.params.parcela,
+      req.params.tipo
+    );
 
     if (result.status) {
       res.status(500).send(result);
@@ -179,10 +185,10 @@ router.put("/close", async (req, res, next) => {
   }
 });
 
-router.put("/reopen/:id", async (req, res, next) => {
+router.put("/reopen", async (req, res, next) => {
   try {
-    logger.info(`PUT /lancto/reopen`); ///${req.params.id}`);
-    const result = await reopen(req.params.id);
+    logger.info(`PUT /lancto/reopen`); ///${req.params.id}/${req.params.parcela}`);
+    const result = await reopen(req.body);
 
     if (result.status) {
       res.status(500).send(result);
@@ -190,7 +196,7 @@ router.put("/reopen/:id", async (req, res, next) => {
       res.send(result);
     }
 
-    //logger.info(`PUT /lancto/reopen/${req.params.id} - ${JSON.stringify(result)}`);
+    //logger.info(`PUT /lancto/reopen/${req.params.id}/${req.params.parcela} - ${JSON.stringify(result)}`);
   } catch (err) {
     if (err.response && err.response.data && err.response.data.msg) {
       res.status(500).send(err.response.data);

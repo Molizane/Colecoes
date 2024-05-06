@@ -329,25 +329,6 @@ export default function Conta() {
         {(status === "create" || status === "edit") && (
           <>
             <div className="form-group">
-              <label htmlFor="descricao" className="control-label">
-                Descrição
-              </label>
-              <input
-                name="descricao"
-                id="descricao"
-                type="text"
-                className="form-control"
-                required
-                value={conta.descricao}
-                onChange={handleInputChange}
-                maxLength={45}
-                autoFocus
-              />
-            </div>
-            <div className={styles.divContador}>
-              <span className={styles.contador}>{lenDescricao}</span>
-            </div>
-            <div className="form-group">
               <label htmlFor="conta" className="control-label">
                 Tipo de Conta
               </label>
@@ -378,6 +359,25 @@ export default function Conta() {
                   style={{ width: "100%" }}
                 />
               )}
+            </div>
+            <div className="form-group">
+              <label htmlFor="descricao" className="control-label">
+                Descrição
+              </label>
+              <input
+                name="descricao"
+                id="descricao"
+                type="text"
+                className="form-control"
+                required
+                value={conta.descricao}
+                onChange={handleInputChange}
+                maxLength={45}
+                autoFocus
+              />
+              <div className="div-contador">
+                <span className="contador">{lenDescricao}</span>
+              </div>
             </div>
           </>
         )}

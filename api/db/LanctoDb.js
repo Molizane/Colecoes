@@ -1,4 +1,5 @@
 import db from './db.js';
+import { strDateBR, strDateUS } from "../functions/utils.js";
 
 export async function insert(lancto) {
   if (!lancto) {
@@ -52,7 +53,7 @@ export async function update(lancto) {
   }
 }
 
-export async function exclude(id, parcela) {
+export async function exclude(id, parcela, tipo) {
   id = parseInt(id);
 
   if (isNaN(id)) {
@@ -60,11 +61,15 @@ export async function exclude(id, parcela) {
   }
 
   try {
-    const result = await db.query("call DeleteLancto(?,?)", [id, parcela]);
+    const result = await db.query("call DeleteLancto(?,?,?)", [
+      id,
+      parcela,
+      tipo,
+    ]);
 
     return { status: 0, msg: "ok" };
   } catch (err) {
-    logger.info(`exclude /Lancto/${id} - ${err.sqlMessage}`);
+    logger.info(`exclude /Lancto/${id}/${parcela}/${tipo} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
 }
@@ -75,8 +80,9 @@ export async function close(lancto) {
   }
 
   try {
-    await db.query("call CloseLancto(?,?,?,?)", [
+    await db.query("call CloseLancto(?,?,?,?,?)", [
       lancto.id,
+      lancto.parcela,
       lancto.dtPagto,
       lancto.vlAcrescimo,
       lancto.vlDesconto,
@@ -88,18 +94,18 @@ export async function close(lancto) {
   }
 }
 
-export async function reopen(id) {
-  id = parseInt(id);
-
-  if (isNaN(id)) {
-    return { status: -1, msg: "id inválido" };
+export async function reopen(lancto) {
+  if (!lancto) {
+    return { status: -1, msg: "Registro não informado" };
   }
 
   try {
-    await db.query("call ReopenLancto(?)", [Id]);
+    await db.query("call ReopenLancto(?,?)", [lancto.id, lancto.parcela]);
     return { status: 0, msg: "ok" };
   } catch (err) {
-    logger.info(`reopen /Lancto/${id} - ${err.sqlMessage}`);
+    logger.info(
+      `reopen /Lancto/${lancto.id}/${lancto.parcela} - ${err.sqlMessage}`
+    );
     return { status: err.sqlState, msg: err.sqlMessage };
   }
 }
@@ -140,10 +146,10 @@ function mapLancto(lancto) {
     flgDiasUteis: lancto.FlgDiasUteis,
     parcelas: lancto.Parcelas,
     parcela: lancto.Parcela,
-    dtVencto: lancto.DtVencto,
+    dtVencto: strDateUS(lancto.DtVencto),
     vlLancto: lancto.VlLancto,
     flPago: lancto.FlPago != 0,
-    dtPagto: lancto.DtPagto,
+    dtPagto: strDateUS(lancto.DtPagto),
     vlAcrescimo: lancto.VlAcrescimo,
     vlDesconto: lancto.VlDesconto,
     vlTotal: lancto.VlTotal,

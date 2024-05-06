@@ -4,9 +4,10 @@ TRUNCATE TABLE `contas_dev`.`lancto`;
 TRUNCATE TABLE `contas_dev`.`lote`;
 */
 
-SELECT l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`, l.`DtLancto`, l.`IdLote`, l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`
-     , li.`Parcela`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
-     , case l.`TpLancto`
+SELECT l.`Id`, l.`IdLote`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`,
+       l.`DtLancto`, l.`TpLancto`, l.`FlgDiasUteis`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`,
+       li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`,
+       CASE l.`TpLancto`
          WHEN 'S' THEN 'Semanal'
          WHEN 'Q' THEN 'Quinzenal'
          WHEN 'M' THEN 'Mensal'
@@ -16,7 +17,7 @@ SELECT l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`, l.`DtLancto
          WHEN '6' THEN 'Semestral'
          WHEN 'A' THEN 'Anual'
          ELSE l.`TpLancto`
-       end AS `DescrTipo`
+       END AS `DescrTipo`
 FROM `contas_dev`.`lancto` l
 INNER JOIN `contas_dev`.`lanctoitens` li
 ON li.`IdLancto` = l.`Id`

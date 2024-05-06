@@ -16,26 +16,12 @@
   justify-content: flex-start;
 }
 
-.divContador {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.contador {
-  font-size: 0.8rem;
-}
-
-.pointer {
-  cursor: pointer;
-}
-
 .funcoes {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding-right: 5px;;
 }
 
@@ -43,9 +29,16 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .spanTipos {
   margin-right: 5px;
+}
+
+.vlLancto{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
 }

@@ -5,10 +5,17 @@ import { Tooltip } from "react-tooltip";
 import CenteredModal from "../../components/ModalDialog";
 import servicoLancto from "../../services/LanctoService";
 import servicoConta from "../../services/ContaService";
-import { strDate, strValue, themeColors } from "../../functions/utils";
+import {
+  strDate,
+  strDateEdit,
+  strValue,
+  themeColors,
+} from "../../functions/utils";
 
+import "react-tooltip/dist/react-tooltip.css";
 import styles from "./styles.module.scss";
 
+import { Row } from "react-bootstrap";
 import { FiPlus } from "react-icons/fi";
 import { AiFillEye, AiFillEdit } from "react-icons/ai";
 import { BsFillTrash3Fill } from "react-icons/bs";
@@ -20,6 +27,32 @@ export default function Lancto() {
   const amberGridColors = [theme.colors.amber5, theme.colors.amber8];
   const greenGridColors = [theme.colors.green5, theme.colors.green8];
   const cyanGridColors = [theme.colors.cyan5, theme.colors.cyan8];
+  const modeloLancto = {
+    id: null,
+    idLote: 0,
+    status: "",
+    tipo: "",
+    descricao: "",
+    idConta: 0,
+    conta: "",
+    flgDiasUteis: true,
+    parcelas: 1,
+    dtVencto: "",
+    vlLancto: 0.0,
+    tpLancto: "M",
+    flgDiasUteis: true,
+    parcelas: 1,
+    parcela: 1,
+    flPago: false,
+    dtPagto: "",
+    tpAcrDesc: "",
+    vlExtra: 0.0,
+    vlAcrescimo: 0.0,
+    vlDesconto: 0.0,
+    vlTotal: 0.0,
+    descrTipo: "",
+    descrParcela: "",
+  };
 
   const tpsLancto = [
     { key: "S", value: "Semanal" },
@@ -33,10 +66,15 @@ export default function Lancto() {
   ];
 
   const tpsExclusao = [
-    { key: "0", value: "Somente o lançto. atual" },
-    { key: "1", value: "Este lançto. e os anteriores" },
-    { key: "2", value: "Este lançto. e os posteriores" },
-    { key: "3", value: "Todos os lançtos." },
+    { key: "L", value: "Lançto. atual" },
+    { key: "A", value: "Lançto. e anteriores" },
+    { key: "P", value: "Lançto. e posteriores" },
+    { key: "T", value: "Todos os lançtos." },
+  ];
+
+  const tpsAcrDesc = [
+    { key: "D", value: "Desconto" },
+    { key: "A", value: "Acréscimo" },
   ];
 
   const [isLoading, setIsLoading] = useState(true);
@@ -44,8 +82,7 @@ export default function Lancto() {
   const [status, setStatus] = useState("list");
 
   const [lanctos, setLanctos] = useState([]);
-  const [id, setId] = useState();
-  const [lancto, setLancto] = useState(null);
+  const [lancto, setLancto] = useState({ ...modeloLancto });
   const [contas, setContas] = useState([]);
   const [criterio, setCriterio] = useState("a");
 
@@ -58,7 +95,9 @@ export default function Lancto() {
   // Popup CRUD
   const [modalCRUDShow, setModalCRUDShow] = useState(false);
   const [tituloCRUD, setTituloCRUD] = useState("");
-  const [corTituloCRUD, setCorTituloCRUD] = useState("");
+  const [modalDeleteShow, setModalDeleteShow] = useState(false);
+  const [modalBaixarShow, setModalBaixarShow] = useState(false);
+  const [tituloExcluir, setTituloExcluir] = useState("");
 
   const [lenDescricao, setLenDescricao] = useState(0);
   const [filtro, setFiltro] = useState("");
@@ -147,6 +186,30 @@ export default function Lancto() {
       value = Math.round(value * 100) / 100;
     } else if (name == "parcelas") {
       value = value.replace(",", "").replace(".", "");
+    } else if (name == "tpAcrDesc") {
+      var vlAcrescimo = 0;
+      var vlDesconto = 0;
+
+      if (value == "A") {
+        vlAcrescimo = lancto.vlExtra;
+        lancto.vlTotal = lancto.vlLancto + lancto.vlExtra;
+      } else {
+        vlDesconto = lancto.vlExtra;
+        lancto.vlTotal = lancto.vlLancto - lancto.vlExtra;
+      }
+
+      lancto.vlAcrescimo = vlAcrescimo;
+      lancto.vlDesconto = vlDesconto;
+    } else if (name == "vlExtra") {
+      value = parseFloat(value);
+
+      if (lancto.tpAcrDesc == "A") {
+        lancto.vlAcrescimo = value;
+        lancto.vlTotal = lancto.vlLancto + value;
+      } else {
+        lancto.vlDesconto = value;
+        lancto.vlTotal = lancto.vlLancto - value;
+      }
     }
 
     setLancto({ ...lancto, [name]: value });
@@ -163,47 +226,71 @@ export default function Lancto() {
   };
 
   const handleCreate = async function () {
-    setLancto({
-      id: null,
-      descricao: "",
-      idConta: 0,
-      flgDiasUteis: true,
-      parcelas: 1,
-      dtVencto: "",
-      vlLancto: "0.00",
-      tpLancto: "M",
-    });
+    document.activeElement.blur();
+    setLancto({ ...modeloLancto });
     setStatus("create");
     setTituloCRUD("Inclusão");
-    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(0);
     setModalCRUDShow(true);
   };
 
-  const handleEdit = async function (id) {
-    const reg = lanctos.find((r) => r.id == id);
-    setLancto(reg);
+  const handleEdit = async function (id, parcela) {
+    document.activeElement.blur();
+    const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    setLancto({ ...reg });
     setStatus("edit");
     setTituloCRUD("Alteração");
-    setCorTituloCRUD(theme.colors.blue12);
     setLenDescricao(reg.descricao.length);
     setModalCRUDShow(true);
   };
 
-  const handleDelete = async function (id) {
-    setId(id);
+  const handleDelete = async function (id, parcela) {
+    document.activeElement.blur();
+    const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    setLancto({ ...reg, tpExclusao: reg.parcelas == 1 ? "T" : "L" });
     setStatus("delete");
-    setTituloCRUD("Atenção!");
-    setCorTituloCRUD(theme.colors.tomato11);
-    setModalCRUDShow(true);
+    setTituloExcluir("Confirme a EXCLUSÃO...");
+    setModalDeleteShow(true);
+  };
+
+  const handleBaixar = async function (id, parcela) {
+    document.activeElement.blur();
+    var reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    reg = { ...reg };
+    reg.tpAcrDesc = reg.vlAcrescimo ? "A" : "D";
+    reg.vlAcrescimo = reg.vlAcrescimo ? parseFloat(reg.vlAcrescimo) : 0;
+    reg.vlDesconto = reg.vlDesconto ? parseFloat(reg.vlDesconto) : 0;
+    reg.vlExtra = reg.vlAcrescimo ? reg.vlAcrescimo : reg.vlDesconto;
+    reg.vlLancto = parseFloat(reg.vlLancto);
+    reg.vlTotal = reg.vlLancto + reg.vlAcrescimo - reg.vlDesconto;
+
+    if (!reg.dtPagto) {
+      reg.dtPagto = reg.dtVencto;
+    }
+
+    setLancto(reg);
+    setStatus("payment");
+    setModalBaixarShow(true);
+  };
+
+  const handleEstornar = async function (id, parcela) {
+    document.activeElement.blur();
+    const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    setLancto(reg);
+    setStatus("reopen");
+    setTituloExcluir("Confirme o ESTORNO DO PAGAMENTO...");
+    setModalDeleteShow(true);
+  };
+
+  const handleCancel = async function () {
+    setModalCRUDShow(false);
+    setModalDeleteShow(false);
+    setModalBaixarShow(false);
+    setLancto({ ...modeloLancto });
+    setStatus("list");
   };
 
   const doPopupAction = async function () {
-    if (status === "delete") {
-      await doDelete();
-      return;
-    }
-
     if (status === "create") {
       await doCreate();
       return;
@@ -213,12 +300,21 @@ export default function Lancto() {
       await doUpdate();
       return;
     }
-  };
 
-  const handleCancel = async function () {
-    setModalCRUDShow(false);
-    setLancto(null);
-    setStatus("list");
+    if (status === "delete") {
+      await doDelete();
+      return;
+    }
+
+    if (status === "payment") {
+      await doPayment();
+      return;
+    }
+
+    if (status === "reopen") {
+      await doReopen();
+      return;
+    }
   };
 
   const doCreate = async function () {
@@ -255,9 +351,37 @@ export default function Lancto() {
     setRefresh(!refresh);
   };
 
+  const doPayment = async function () {
+    const response = await servicoLancto.payment(lancto);
+
+    if (response.data.msg && response.data.msg !== "ok") {
+      errPopup(response.data.msg);
+      return;
+    }
+
+    setModalBaixarShow(false);
+    setRefresh(!refresh);
+  };
+
+  const doReopen = async function () {
+    const response = await servicoLancto.reopen(lancto);
+
+    if (response.data.msg && response.data.msg !== "ok") {
+      errPopup(response.data.msg);
+      return;
+    }
+
+    setModalDeleteShow(false);
+    setRefresh(!refresh);
+  };
+
   const doDelete = async function () {
-    setModalCRUDShow(false);
-    const response = await servicoLancto.remove(id);
+    setModalDeleteShow(false);
+    const response = await servicoLancto.remove(
+      lancto.id,
+      lancto.parcela,
+      lancto.tpExclusao
+    );
 
     if (response.data.msg && response.data.msg !== "ok") {
       errPopup(response.data.msg);
@@ -281,194 +405,208 @@ export default function Lancto() {
   };
 
   return (
-    <div className={styles.container}>
-      <Tooltip
-        id="atualizarTip"
-        effect="solid"
-        style={{
-          backgroundColor: theme.colors.blue10,
-          color: theme.colors.gray1,
-        }}
-      />
+    <>
+      <div className={styles.container}>
+        <Tooltip
+          id="atualizarTip"
+          effect="solid"
+          opacity={1}
+          border={`1px solid ${theme.colors.blue12}`}
+          style={{
+            backgroundColor: theme.colors.blue10,
+            color: theme.colors.gray1,
+            opacity: 1,
+          }}
+          className="tooltip-bg"
+        />
 
-      <div className="row m-0">
-        <div className="col-12">
-          <div className={styles.titulo}>
-            <div className={styles.titulo2}>
-              <h4>Lançamentos de Contas</h4>
-              <button className="btn-insert" onClick={handleCreate}>
-                <FiPlus />
-                Novo
+        <Row className="m-0">
+          <div className="col-12">
+            <div className={styles.titulo}>
+              <div className={styles.titulo2}>
+                <h4>Lançamentos de Contas</h4>
+                <button className="btn-insert" onClick={handleCreate}>
+                  <FiPlus />
+                  Novo
+                </button>
+              </div>
+              <div>
+                <span className={styles.spanTipos}>
+                  Incluir conta no filtro
+                </span>
+                <input
+                  className={styles.spanTipos}
+                  type="checkbox"
+                  name="chkContas"
+                  onChange={handleFiltroContas}
+                />
+                <input
+                  type="search"
+                  className={styles.search}
+                  placeholder="Filtro.."
+                  name="filtro"
+                  maxLength={45}
+                  value={filtro}
+                  onChange={handleFilterChange}
+                />
+              </div>
+            </div>
+            <hr />
+          </div>
+        </Row>
+
+        <div style={{ marginLeft: "12px", marginRight: "22px" }}>
+          <Row className="m-0" style={{ fontWeight: "bold" }}>
+            <div className="col-1">Situação</div>
+            <div className="col-6">Descrição</div>
+            <div className="col-2">Conta</div>
+            <div className="col-1">Vencimento</div>
+            <div className={`col-1 ${styles.vlLancto}`}>Valor</div>
+            <div className={`col-1 ${styles.refresh} `}>
+              <button
+                type="button"
+                className="btn-refresh"
+                onClick={doRefresh}
+                data-tooltip-id="atualizarTip"
+                data-tooltip-content="Atualizar"
+                data-tooltip-place="top"
+              >
+                <FaArrowsRotate />
               </button>
             </div>
-            <div>
-              <span className={styles.spanTipos}>Incluir conta no filtro</span>
-              <input
-                className={styles.spanTipos}
-                type="checkbox"
-                name="chkContas"
-                onChange={handleFiltroContas}
-              />
-              <input
-                type="search"
-                className={styles.search}
-                placeholder="Filtro.."
-                name="filtro"
-                maxLength={45}
-                value={filtro}
-                onChange={handleFilterChange}
-              />
-            </div>
+          </Row>
+        </div>
+
+        <Row className="m-0">
+          <div className="col-12">
+            <hr style={{ marginTop: "1px", marginBottom: "2px" }} />
           </div>
-          <hr />
-        </div>
-      </div>
+        </Row>
 
-      <div style={{ marginLeft: "12px", marginRight: "22px" }}>
-        <div className="row m-0" style={{ fontWeight: "bold" }}>
-          <div className="col-1">Situação</div>
-          <div className="col-4">Descrição</div>
-          <div className="col-4">Conta</div>
-          <div className="col-1">Vencimento</div>
-          <div className="col-1">Valor</div>
-          <div className={`col-1 ${styles.refresh} `}>
-            <button
-              type="button"
-              className="btn-refresh"
-              onClick={doRefresh}
-              data-tooltip-id="atualizarTip"
-              data-tooltip-content="Atualizar"
-              data-tooltip-place="top"
-            >
-              <FaArrowsRotate />
-            </button>
-          </div>
-        </div>
-      </div>
+        <div
+          style={{
+            height: "79vh",
+            overflowY: "scroll",
+            overflowX: "hidden",
+            marginLeft: "12px",
+          }}
+        >
+          {!isLoading &&
+            filtrados &&
+            filtrados.map((lancto, index) => {
+              var style = "";
 
-      <div className="row m-0">
-        <div className="col-12">
-          <hr style={{ marginTop: "1px", marginBottom: "2px" }} />
-        </div>
-      </div>
+              if (lancto.status == 0) {
+                // Vencido
+                style = {
+                  backgroundColor: tomatoGridColors[index % 2],
+                  color: theme.colors.gray11,
+                  fontWeight: "bold",
+                };
+              } else if (lancto.status == 1) {
+                // Vencendo
+                style = {
+                  backgroundColor: amberGridColors[index % 2],
+                  color: theme.colors.gray11,
+                  fontWeight: "bold",
+                };
+              } else if (lancto.status == 2) {
+                // A vencer
+                style = {
+                  backgroundColor: greenGridColors[index % 2],
+                  color: theme.colors.gray11,
+                };
+              } else {
+                // Pago
+                style = {
+                  backgroundColor: cyanGridColors[index % 2],
+                  color: theme.colors.gray11,
+                };
+              }
 
-      <div
-        style={{
-          height: "79vh",
-          overflowY: "scroll",
-          overflowX: "hidden",
-          marginLeft: "12px",
-        }}
-      >
-        {!isLoading &&
-          filtrados &&
-          filtrados.map((lancto, index) => {
-            var style = "";
-
-            if (lancto.status == 0) {
-              // Vencido
-              style = {
-                backgroundColor: tomatoGridColors[index % 2],
-                color: theme.colors.gray11,
-                fontWeight: "bold",
-              };
-            } else if (lancto.status == 1) {
-              // Vencendo
-              style = {
-                backgroundColor: amberGridColors[index % 2],
-                color: theme.colors.gray11,
-                fontWeight: "bold",
-              };
-            } else if (lancto.status == 2) {
-              // A vencer
-              style = {
-                backgroundColor: greenGridColors[index % 2],
-                color: theme.colors.gray11,
-              };
-            } else {
-              // Pago
-              style = {
-                backgroundColor: cyanGridColors[index % 2],
-                color: theme.colors.gray11,
-              };
-            }
-
-            return (
-              <div
-                className="row m-0"
-                style={style}
-                key={`lancto${lancto.id}${lancto.parcela}`}
-              >
-                <div className="col-1">{lancto.tipo}</div>
-                <div className="col-4">{`${lancto.descricao}${lancto.descrParcela}`}</div>
-                <div className="col-4">{lancto.conta}</div>
-                <div className="col-1">{strDate(lancto.dtVencto)}</div>
-                <div className="col-1">{strValue(lancto.vlTotal)}</div>
-                <div className={`col-1 ${styles.funcoes}`}>
-                  <div className={styles.refresh}>
-                    {/* <button className="btn-refresh">
-                    <AiFillEye
-                      className="btn-refresh"
-                      data-tooltip-id="atualizarTip"
-                      data-tooltip-content="Visualizar"
-                      data-tooltip-place="top"
-                    />
-                  </button> */}
-                    <button
-                      className="btn-refresh"
-                      onClick={() => {
-                        handleEdit(lancto.id);
-                      }}
-                    >
-                      <AiFillEdit
-                        className="btn-refresh"
-                        data-tooltip-id="atualizarTip"
-                        data-tooltip-content="Editar"
-                        data-tooltip-place="top"
-                      />
-                    </button>
-                    <button
-                      className="btn-refresh"
-                      onClick={() => {
-                        handleDelete(lancto.id);
-                      }}
-                    >
-                      <BsFillTrash3Fill
-                        className="btn-refresh"
-                        data-tooltip-id="atualizarTip"
-                        data-tooltip-content="Excluir"
-                        data-tooltip-place="top"
-                      />
-                    </button>
-                    {!lancto.flPago && (
-                      <button className="btn-refresh">
-                        <MdPriceCheck
-                          className="btn-refresh"
-                          data-tooltip-id="atualizarTip"
-                          data-tooltip-content="Baixar"
-                          data-tooltip-place="top"
-                        />
-                      </button>
-                    )}
-                    {lancto.flPago && (
-                      <button className="btn-refresh">
-                        <MdOutlineMoneyOff
-                          className="btn-refresh"
-                          data-tooltip-id="atualizarTip"
-                          data-tooltip-content="Estornar"
-                          data-tooltip-place="top"
-                        />
-                      </button>
-                    )}
+              return (
+                <Row
+                  className="m-0"
+                  style={style}
+                  key={`lancto${lancto.id}${lancto.parcela}`}
+                >
+                  <div className="col-1">{lancto.tipo}</div>
+                  <div className="col-6">{`${lancto.descricao}${lancto.descrParcela}`}</div>
+                  <div className="col-2">{lancto.conta}</div>
+                  <div className="col-1">{strDate(lancto.dtVencto)}</div>
+                  <div className={`col-1 ${styles.vlLancto}`}>
+                    {strValue(lancto.vlTotal)}
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                  <div className={`col-1 ${styles.funcoes}`}>
+                    <div className={styles.refresh}>
+                      {/* <button className="btn-refresh"><AiFillEye className="btn-refresh" data-tooltip-id="atualizarTip" data-tooltip-content="Visualizar" data-tooltip-place="top" /></button> */}
+                      <button
+                        className="btn-refresh"
+                        onClick={() => {
+                          handleEdit(lancto.id, lancto.parcela);
+                        }}
+                      >
+                        <AiFillEdit
+                          className="btn-refresh"
+                          data-tooltip-id="atualizarTip"
+                          data-tooltip-content="Editar"
+                          data-tooltip-place="top"
+                        />
+                      </button>
+                      <button
+                        className="btn-refresh"
+                        onClick={() => {
+                          handleDelete(lancto.id, lancto.parcela);
+                        }}
+                      >
+                        <BsFillTrash3Fill
+                          className="btn-refresh"
+                          data-tooltip-id="atualizarTip"
+                          data-tooltip-content="Excluir"
+                          data-tooltip-place="top"
+                        />
+                      </button>
+                      {!lancto.flPago && (
+                        <button
+                          className="btn-refresh"
+                          onClick={() => {
+                            handleBaixar(lancto.id, lancto.parcela);
+                          }}
+                        >
+                          <MdPriceCheck
+                            className="btn-refresh"
+                            data-tooltip-id="atualizarTip"
+                            data-tooltip-content="Baixar"
+                            data-tooltip-place="top"
+                          />
+                        </button>
+                      )}
+                      {lancto.flPago && (
+                        <button
+                          className="btn-refresh"
+                          onClick={() => {
+                            handleEstornar(lancto.id, lancto.parcela);
+                          }}
+                        >
+                          <MdOutlineMoneyOff
+                            className="btn-refresh"
+                            data-tooltip-id="atualizarTip"
+                            data-tooltip-content="Estornar"
+                            data-tooltip-place="top"
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </Row>
+              );
+            })}
+        </div>
       </div>
 
       {/* Popup mensagens diversas */}
       <CenteredModal
+        tamanho="lg"
         titulo={titulo}
         corTitulo={corTitulo}
         conteudo={texto}
@@ -479,226 +617,458 @@ export default function Lancto() {
         onHide={() => setMessageShow(false)}
       />
 
-      {/* Popup CRUD */}
+      {/* Excluir/Estornar */}
+      <CenteredModal
+        tamanho="lg"
+        backdrop="static"
+        titulo="Atenção!"
+        corTitulo={theme.colors.tomato11}
+        corConteudo={theme.colors.gray11}
+        closeButton={false}
+        thumbsUp={true}
+        thumbsDown={true}
+        floppy={false}
+        cancel={false}
+        show={modalDeleteShow}
+        onConfirm={() => doPopupAction()}
+        onHide={() => handleCancel()}
+      >
+        <Row>
+          <div className="col-12 mb-2">
+            <h5>{tituloExcluir}</h5>
+          </div>
+          <div className="col-12">
+            <div className="form-group">
+              <label htmlFor="descricao" className="control-label">
+                Descrição
+              </label>
+              <input
+                className="form-control"
+                name="descricao"
+                id="descricao"
+                type="text"
+                disabled
+                value={`${lancto.descricao}${lancto.descrParcela}`}
+                onChange={handleInputChange}
+                maxLength={100}
+              />
+            </div>
+          </div>
+          {status == "delete" && lancto.parcelas > 1 && (
+            <div className="col-12">
+              <div className="form-group">
+                <label htmlFor="tpExclusao" className="control-label">
+                  Tipo de EXCLUSÃO
+                </label>
+                <select
+                  name="tpExclusao"
+                  id="tpExclusao"
+                  className="form-control"
+                  value={lancto.tpExclusao}
+                  onChange={handleInputChange}
+                >
+                  {tpsExclusao.map((tpExclusao) => {
+                    const { key, value } = tpExclusao;
+                    return (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+          )}
+        </Row>
+      </CenteredModal>
+
+      {/* Popup Incluir/Alterar */}
       <CenteredModal
         tamanho="lg"
         backdrop="static"
         titulo={tituloCRUD}
-        corTitulo={corTituloCRUD}
-        corConteudo={theme.colors.gray1}
+        corTitulo={theme.colors.blue12}
+        corConteudo={theme.colors.gray11}
         closeButton={false}
-        thumbsUp={status === "delete"}
-        thumbsDown={status === "delete"}
-        floppy={status !== "delete"}
-        cancel={status !== "delete"}
+        thumbsUp={false}
+        thumbsDown={false}
+        floppy={true}
+        cancel={true}
         show={modalCRUDShow}
         onConfirm={() => doPopupAction()}
         onHide={() => handleCancel()}
       >
-        {status === "delete" && <h5>Confirme a exclusão...</h5>}
-        {(status === "create" || status === "edit") && (
-          <>
-            <div className="row">
-              <div className="col-3">
-                <div className="form-group">
-                  <label htmlFor="dtVencto" className="control-label">
-                    Data Vencimento
-                  </label>
-                  <input
-                    className="form-control"
-                    name="dtVencto"
-                    id="dtVencto"
-                    type="date"
-                    required
-                    autoFocus
-                    value={lancto.dtVencto.substr(0, 10)}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-              <div className="col-3">
-                <div className="form-group">
-                  <label htmlFor="vlLancto" className="control-label">
-                    Valor
-                  </label>
-                  <input
-                    className="form-control"
-                    name="vlLancto"
-                    id="vlLancto"
-                    type="number"
-                    required
-                    min={0}
-                    step={0.01}
-                    pattern="([0-9]{1,3}).([0-9]{1,3})"
-                    value={lancto.vlLancto}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              {status === "create" && (
-                <div className="col-3">
-                  <div className="form-group">
-                    <label htmlFor="parcelas" className="control-label">
-                      Parcelas
-                    </label>
-                    <input
-                      className="form-control"
-                      name="parcelas"
-                      id="parcelas"
-                      type="number"
-                      required
-                      min={1}
-                      value={lancto.parcelas}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {status === "edit" && (
-                <div className="col-3">
-                  <div className="form-group">
-                    <label htmlFor="parcela" className="control-label">
-                      Parcela
-                    </label>
-                    <input
-                      className="form-control"
-                      name="parcela"
-                      id="parcela"
-                      type="text"
-                      disabled
-                      value={lancto.descrParcela
-                        .replace("(", "")
-                        .replace(")", "")}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {lancto.parcelas > 1 && (
-                <div className="col-3">
-                  <div className="form-group">
-                    <label htmlFor="tpLancto" className="control-label">
-                      Intervalo
-                    </label>
-                    {status === "create" && (
-                      <select
-                        name="tpLancto"
-                        id="tpLancto"
-                        className="form-control"
-                        value={lancto.tpLancto}
-                        onChange={handleInputChange}
-                      >
-                        {tpsLancto.map((tpLancto) => {
-                          const { key, value } = tpLancto;
-                          return (
-                            <option key={key} value={key}>
-                              {value}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    )}
-                    {status === "edit" && (
-                      <input
-                        name="tpLancto"
-                        id="tpLancto"
-                        type="text"
-                        className="form-control"
-                        disabled
-                        value={lancto.descrTipo}
-                        style={{ width: "100%" }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
+        <Row>
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="dtVencto" className="control-label">
+                Data Vencimento
+              </label>
+              <input
+                className="form-control"
+                name="dtVencto"
+                id="dtVencto"
+                type="date"
+                required
+                autoFocus
+                value={lancto.dtVencto.substring(0, 10)}
+                onChange={handleInputChange}
+              />
             </div>
-
-            <div className="row">
-              <div className="col-9">
-                <div className="form-group">
-                  <label htmlFor="idConta" className="control-label">
-                    Conta
-                  </label>
-                  {status === "create" && (
-                    <select
-                      name="idConta"
-                      id="idConta"
-                      className="form-control"
-                      value={lancto.IdConta}
-                      onChange={handleInputChange}
-                    >
-                      {contas.map((conta) => {
-                        const { key, value } = conta;
-                        return (
-                          <option key={key} value={key}>
-                            {value}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  )}
-                  {status === "edit" && (
-                    <input
-                      name="idConta"
-                      id="idConta"
-                      type="text"
-                      className="form-control"
-                      disabled
-                      value={lancto.conta}
-                      style={{ width: "100%" }}
-                    />
-                  )}
-                </div>
-              </div>
-              {lancto.parcelas > 1 && (
-                <div className="col-3">
-                  <div className="form-group">
-                    <label htmlFor="flgDiasUteis" className="control-label">
-                      Dias úteis
-                    </label>
-                    <div className="form-control">
-                      <input
-                        type="checkbox"
-                        name="flgDiasUteis"
-                        id="flgDiasUteis"
-                        checked={lancto.flgDiasUteis}
-                        onChange={handleToggle}
-                        disabled={status == "edit" ? "disabled" : ""}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+          </div>
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="vlLancto" className="control-label">
+                Valor
+              </label>
+              <input
+                className="form-control"
+                name="vlLancto"
+                id="vlLancto"
+                type="number"
+                required
+                min={0}
+                step={0.01}
+                pattern="([0-9]{1,3}).([0-9]{1,3})"
+                value={lancto.vlLancto}
+                onChange={handleInputChange}
+              />
             </div>
+          </div>
 
-            <div className="row">
-              <div className="col-12">
-                <div className="form-group">
-                  <label htmlFor="descricao" className="control-label">
-                    Descrição
-                  </label>
-                  <input
+          {status === "create" && (
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="parcelas" className="control-label">
+                  Parcelas
+                </label>
+                <input
+                  className="form-control"
+                  name="parcelas"
+                  id="parcelas"
+                  type="number"
+                  required
+                  min={1}
+                  value={lancto.parcelas}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          )}
+
+          {status === "edit" && (
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="parcela" className="control-label">
+                  Parcela
+                </label>
+                <input
+                  className="form-control"
+                  name="parcela"
+                  id="parcela"
+                  type="text"
+                  disabled
+                  value={lancto.descrParcela.replace("(", "").replace(")", "")}
+                />
+              </div>
+            </div>
+          )}
+
+          {lancto.parcelas > 1 && (
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="tpLancto" className="control-label">
+                  Intervalo
+                </label>
+                {status === "create" && (
+                  <select
+                    name="tpLancto"
+                    id="tpLancto"
                     className="form-control"
-                    name="descricao"
-                    id="descricao"
+                    value={lancto.tpLancto}
+                    onChange={handleInputChange}
+                  >
+                    {tpsLancto.map((tpLancto) => {
+                      const { key, value } = tpLancto;
+                      return (
+                        <option key={key} value={key}>
+                          {value}
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+                {status === "edit" && (
+                  <input
+                    name="tpLancto"
+                    id="tpLancto"
                     type="text"
-                    required
-                    value={lancto.descricao}
-                    onChange={handleInputChange}
-                    maxLength={100}
+                    className="form-control"
+                    disabled
+                    value={lancto.descrTipo}
+                    style={{ width: "100%" }}
                   />
-                </div>
-                <div className={styles.divContador}>
-                  <span className={styles.contador}>{lenDescricao}</span>
+                )}
+              </div>
+            </div>
+          )}
+        </Row>
+
+        <Row>
+          <div className="col-9">
+            <div className="form-group">
+              <label htmlFor="idConta" className="control-label">
+                Conta
+              </label>
+              {status === "create" && (
+                <select
+                  name="idConta"
+                  id="idConta"
+                  className="form-control"
+                  value={lancto.IdConta}
+                  onChange={handleInputChange}
+                >
+                  {contas.map((conta) => {
+                    const { key, value } = conta;
+                    return (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    );
+                  })}
+                </select>
+              )}
+              {status === "edit" && (
+                <input
+                  name="idConta"
+                  id="idConta"
+                  type="text"
+                  className="form-control"
+                  disabled
+                  value={lancto.conta}
+                  style={{ width: "100%" }}
+                />
+              )}
+            </div>
+          </div>
+          {lancto.parcelas > 1 && (
+            <div className="col-3">
+              <div className="form-group">
+                <label htmlFor="flgDiasUteis" className="control-label">
+                  Dias úteis
+                </label>
+                <div className="form-control">
+                  <input
+                    type="checkbox"
+                    name="flgDiasUteis"
+                    id="flgDiasUteis"
+                    checked={lancto.flgDiasUteis}
+                    onChange={handleToggle}
+                    disabled={status == "edit" ? "disabled" : ""}
+                  />
                 </div>
               </div>
             </div>
-          </>
-        )}
+          )}
+        </Row>
+
+        <Row>
+          <div className="col-12">
+            <div className="form-group">
+              <label htmlFor="descricao" className="control-label">
+                Descrição
+              </label>
+              <input
+                className="form-control"
+                name="descricao"
+                id="descricao"
+                type="text"
+                required
+                value={lancto.descricao}
+                onChange={handleInputChange}
+                maxLength={100}
+              />
+              <div className="div-contador">
+                <span className="contador">{lenDescricao}</span>
+              </div>
+            </div>
+          </div>
+        </Row>
       </CenteredModal>
-    </div>
+
+      {/* Popup Baixar */}
+      <CenteredModal
+        tamanho="lg"
+        backdrop="static"
+        titulo="Baixar"
+        corTitulo={theme.colors.blue12}
+        corConteudo={theme.colors.gray11}
+        closeButton={false}
+        thumbsUp={false}
+        thumbsDown={false}
+        floppy={true}
+        cancel={true}
+        show={modalBaixarShow}
+        onConfirm={() => doPopupAction()}
+        onHide={() => handleCancel()}
+      >
+        <Row>
+          <div className="col-12">
+            <div className="form-group">
+              <label htmlFor="descricao" className="control-label">
+                Descrição
+              </label>
+              <input
+                className="form-control"
+                name="descricao"
+                id="descricao"
+                type="text"
+                disabled
+                value={`${lancto.descricao}`}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="parcela" className="control-label">
+                Parcela
+              </label>
+              <input
+                className="form-control"
+                name="parcela"
+                id="parcela"
+                type="text"
+                disabled
+                value={lancto.descrParcela.replace("(", "").replace(")", "")}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="dtVencto" className="control-label">
+                Data Vencimento
+              </label>
+              <input
+                className="form-control"
+                name="dtVencto"
+                id="dtVencto"
+                type="date"
+                disabled
+                value={lancto.dtVencto.substring(0, 10)}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="vlLancto" className="control-label">
+                Valor
+              </label>
+              <input
+                className="form-control"
+                name="vlLancto"
+                id="vlLancto"
+                disabled
+                value={strValue(lancto.vlLancto)}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="vlLancto" className="control-label">
+                Situação
+              </label>
+              <input
+                className="form-control"
+                name="tipo"
+                id="tipo"
+                disabled
+                value={lancto.tipo}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="dtPagto" className="control-label">
+                Data Pagamento
+              </label>
+              <input
+                className="form-control"
+                name="dtPagto"
+                id="dtPagto"
+                type="date"
+                required
+                autoFocus
+                value={lancto.dtPagto ? lancto.dtPagto.substring(0, 10) : ""}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="tpAcrDesc" className="control-label">
+                Acréscimo/Desconto
+              </label>
+              <select
+                name="tpAcrDesc"
+                id="tpAcrDesc"
+                className="form-control"
+                value={lancto.tpAcrDesc}
+                onChange={handleInputChange}
+              >
+                {tpsAcrDesc.map((tpAcrDesc) => {
+                  const { key, value } = tpAcrDesc;
+                  return (
+                    <option key={key} value={key}>
+                      {value}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="vlExtra" className="control-label">
+                Valor A/D
+              </label>
+              <input
+                className="form-control"
+                name="vlExtra"
+                id="vlExtra"
+                type="number"
+                required
+                min={0}
+                step={0.01}
+                pattern="([0-9]{1,3}).([0-9]{1,3})"
+                value={lancto.vlExtra}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+
+          <div className="col-3">
+            <div className="form-group">
+              <label htmlFor="vlTotal" className="control-label">
+                Valor Total
+              </label>
+              <input
+                className="form-control"
+                name="vlTotal"
+                id="vlTotal"
+                value={strValue(lancto.vlTotal)}
+                disabled
+              />
+            </div>
+          </div>
+        </Row>
+      </CenteredModal>
+    </>
   );
 }

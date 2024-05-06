@@ -41,12 +41,6 @@ const get = async (id) => {
   }
 };
 
-const exportedObject = {
-  create,
-  update,
-  remove,
-  getAll,
-  get,
-};
+const exportedObject = { create, update, remove, getAll, get };
 
 export default exportedObject;

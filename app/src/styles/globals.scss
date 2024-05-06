@@ -1,3 +1,27 @@
+@import "@radix-ui/colors/blue";
+@import "@radix-ui/colors/gray";
+@import "@radix-ui/colors/gray-dark.css";
+@import "@radix-ui/colors/red";
+@import "@radix-ui/colors/green";
+@import "@radix-ui/colors/lime";
+@import "@radix-ui/colors/blue";
+@import "@radix-ui/colors/tomato";
+@import "@radix-ui/colors/yellow";
+@import "@radix-ui/colors/amber";
+@import "@radix-ui/colors/cyan";
+
+:root {
+  --rt-color-white: #fff;
+  --rt-color-dark: #222;
+  --rt-color-success: #8dc572;
+  --rt-color-error: #be6464;
+  --rt-color-warning: #f0ad4e;
+  --rt-color-info: #337ab7;
+  --rt-opacity: 1;
+  --rt-transition-show-delay: 0.1s;
+  --rt-transition-closing-delay: 0.1s;
+}
+
 html,
 body {
   height: 100%;
@@ -17,8 +41,8 @@ a {
 }
 
 body {
-  color: #5f5f5f;
-  background: white;
+  color: var(--gray-11);
+  background: var(--gray-1);
 }
 
 button,
@@ -61,7 +85,7 @@ input[type="checkbox"] {
 
 .btn-refresh {
   background-color: transparent;
-  color: rgb(100, 100, 100);
+  color: var(--gray-dark-5);
   border: none;
   display: flex;
   z-index: 1;
@@ -69,7 +93,7 @@ input[type="checkbox"] {
 }
 
 .modal-content {
-  background: #bbbbbb;
+  background: var(--gray-4);
 }
 
 .modal-content.warninng {
@@ -82,8 +106,28 @@ input[type="checkbox"] {
 
 .control-label {
   margin-bottom: 5px;
+  color: var(--gray-11);
 }
 
-.form-control-x {
-  margin-bottom: 5px;
+.form-group {
+  margin-bottom: 15px;
+}
+
+.div-contador {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.contador {
+  font-size: 0.8rem;
+  color: var(--gray-11);
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.tooltip-bg {
+  opacity: 0.9 !important;
 }

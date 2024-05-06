@@ -276,9 +276,9 @@ export default function TipoConta() {
                 maxLength={45}
                 autoFocus
               />
-            </div>
-            <div className={styles.divContador}>
-              <span className={styles.contador}>{lenDescricao}</span>
+              <div className="div-contador">
+                <span className="contador">{lenDescricao}</span>
+              </div>
             </div>
           </>
         )}

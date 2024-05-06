@@ -11,16 +11,31 @@ const create = async (data) => {
 
 const update = async (data) => {
   try {
-    //return await http.put(`/lancto/${data.id}`, data);
     return await http.put("/lancto", data);
   } catch (ex) {
     return trataErrosApi(ex);
   }
 };
 
-const remove = async (id) => {
+const payment = async (data) => {
   try {
-    return await http.delete(`/lancto/${id}`);
+    return await http.put("/lancto/close", data);
+  } catch (ex) {
+    return trataErrosApi(ex);
+  }
+};
+
+const reopen = async (data) => {
+  try {
+    return await http.put(`/lancto/reopen`, data);
+  } catch (ex) {
+    return trataErrosApi(ex);
+  }
+};
+
+const remove = async (id, parcela, tipo) => {
+  try {
+    return await http.delete(`/lancto/${id}/${parcela}/${tipo}`);
   } catch (ex) {
     return trataErrosApi(ex);
   }
@@ -42,12 +57,6 @@ const get = async (id) => {
   }
 };
 
-const exportedObject = {
-  create,
-  update,
-  remove,
-  getAll,
-  get,
-};
+const exportedObject = { create, update, payment, reopen, remove, getAll, get };
 
 export default exportedObject;
