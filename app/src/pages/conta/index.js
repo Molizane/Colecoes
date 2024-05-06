@@ -89,10 +89,13 @@ export default function Conta() {
           (filtraTipo &&
             reg.tipoConta.toLowerCase().indexOf(filtro.toLowerCase()) !== -1)
       );
+
       setFiltrados(filtrados);
+
       const tiposDistintos = [
         ...new Set(filtrados.map((item) => item.tipoConta)),
       ];
+
       setTiposDistintos(tiposDistintos);
       return;
     }

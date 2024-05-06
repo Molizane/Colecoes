@@ -5,12 +5,7 @@ import { Tooltip } from "react-tooltip";
 import CenteredModal from "../../components/ModalDialog";
 import servicoLancto from "../../services/LanctoService";
 import servicoConta from "../../services/ContaService";
-import {
-  strDate,
-  strDateEdit,
-  strValue,
-  themeColors,
-} from "../../functions/utils";
+import { strDate, strValue, themeColors } from "../../functions/utils";
 
 import "react-tooltip/dist/react-tooltip.css";
 import styles from "./styles.module.scss";
@@ -20,13 +15,17 @@ import { FiPlus } from "react-icons/fi";
 import { AiFillEye, AiFillEdit } from "react-icons/ai";
 import { BsFillTrash3Fill } from "react-icons/bs";
 import { MdPriceCheck, MdOutlineMoneyOff } from "react-icons/md";
+import { CollectionsBookmarkOutlined } from "@material-ui/icons";
 
 export default function Lancto() {
   const theme = themeColors();
-  const tomatoGridColors = [theme.colors.tomato5, theme.colors.tomato8];
-  const amberGridColors = [theme.colors.amber5, theme.colors.amber8];
+  const tomatoGridColors = [theme.colors.red5, theme.colors.red8];
+  //const amberGridColors = [theme.colors.amber5, theme.colors.amber8];
+  const yellowGridColors = [theme.colors.yellow5, theme.colors.yellow8];
   const greenGridColors = [theme.colors.green5, theme.colors.green8];
   const cyanGridColors = [theme.colors.cyan5, theme.colors.cyan8];
+  const grayGridColors = [theme.colors.gray11, theme.colors.gray1];
+
   const modeloLancto = {
     id: null,
     idLote: 0,
@@ -77,6 +76,14 @@ export default function Lancto() {
     { key: "A", value: "Acréscimo" },
   ];
 
+  const tpsVenctos = [
+    { key: "0", value: "Vencidos" },
+    { key: "1", value: "Vencendo" },
+    { key: "2", value: "A vencer" },
+    { key: "3", value: "Pago" },
+    { key: "4", value: "Todos" },
+  ];
+
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
   const [status, setStatus] = useState("list");
@@ -103,12 +110,55 @@ export default function Lancto() {
   const [filtro, setFiltro] = useState("");
   const [filtrados, setFiltrados] = useState(null);
   const [filtraConta, setFiltraConta] = useState(false);
+  const [tipoVencto, setTipoVencto] = useState("4");
 
   const errPopup = function (msg) {
     setTitulo("Erro");
     setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
     setMessageShow(true);
+  };
+
+  useEffect(() => {
+    //console.log("page_load");
+    // Título da aba
+    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
+    document.title = "Lançamentos";
+  }, []);
+
+  useEffect(() => {
+    //console.log("page_refresh");
+    getAllContas();
+    getAll();
+  }, [refresh]);
+
+  useEffect(() => {
+    filtraLanctos(lanctos, filtro, filtraConta, tipoVencto);
+  }, [lanctos, filtro, filtraConta, tipoVencto]);
+
+  const filtraLanctos = (lanctos, filtro, filtraConta, tipoVencto) => {
+    if (filtro || tipoVencto != "4") {
+      var filtrados =
+        tipoVencto == "4"
+          ? lanctos
+          : lanctos.filter((reg) => reg.status == tipoVencto);
+
+      if (filtro) {
+        filtrados = filtrados.filter(
+          (reg) =>
+            (
+              reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
+            ).indexOf(filtro.toLowerCase()) !== -1 ||
+            (filtraConta &&
+              reg.conta.toLowerCase().indexOf(filtro.toLowerCase()) !== -1)
+        );
+      }
+
+      setFiltrados(filtrados);
+      return;
+    }
+
+    setFiltrados(lanctos);
   };
 
   const getAllContas = async () => {
@@ -120,9 +170,16 @@ export default function Lancto() {
     }
 
     if (response.data) {
+      const sort = (a, b) => {
+        return a.descricao.localeCompare(b.descricao, "pt", {
+          sensitivity: "base",
+        });
+      };
+
+      const data = response.data.sort(sort);
       const results = [];
 
-      response.data.forEach((value) => {
+      data.forEach((value) => {
         results.push({
           key: value.id,
           value: value.descricao,
@@ -145,39 +202,17 @@ export default function Lancto() {
     }
 
     setLanctos(response.data);
-    filtraLanctos(response.data, filtro, filtraConta);
     setIsLoading(false);
   };
 
-  const filtraLanctos = (lanctos, filtro, filtraConta) => {
-    if (filtro) {
-      const filtrados = lanctos.filter(
-        (reg) =>
-          (
-            reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
-          ).indexOf(filtro.toLowerCase()) !== -1 ||
-          (filtraConta &&
-            reg.conta.toLowerCase().indexOf(filtro.toLowerCase()) !== -1)
-      );
-      setFiltrados(filtrados);
-      return;
-    }
-
-    setFiltrados(lanctos);
+  const handleTipoVencto = (event) => {
+    setTipoVencto(event.target.value);
   };
 
-  useEffect(() => {
-    //console.log('page_load');
-    // Título da aba
-    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
-    document.title = "Lançamentos";
-  }, []);
-
-  useEffect(() => {
-    //console.log("page_refresh");
-    getAllContas();
-    getAll();
-  }, [refresh]);
+  const handleFilterChange = (event) => {
+    var txt = event.target.value.trim();
+    setFiltro(txt);
+  };
 
   const handleInputChange = (event) => {
     var { name, value } = event.target;
@@ -217,12 +252,6 @@ export default function Lancto() {
     if (name == "descricao") {
       setLenDescricao(value.length);
     }
-  };
-
-  const handleFilterChange = (event) => {
-    var txt = event.target.value.trim();
-    setFiltro(txt);
-    filtraLanctos(lanctos, txt, filtraConta);
   };
 
   const handleCreate = async function () {
@@ -393,7 +422,6 @@ export default function Lancto() {
 
   const handleFiltroContas = function (e) {
     setFiltraConta(e.target.checked);
-    filtraLanctos(lanctos, filtro, e.target.checked);
   };
 
   const handleToggle = () => {
@@ -414,8 +442,8 @@ export default function Lancto() {
           border={`1px solid ${theme.colors.blue12}`}
           style={{
             backgroundColor: theme.colors.blue10,
-            color: theme.colors.gray1,
-            opacity: 1,
+            color: theme.colors.red1,
+            zIndex: 999,
           }}
           className="tooltip-bg"
         />
@@ -430,25 +458,48 @@ export default function Lancto() {
                   Novo
                 </button>
               </div>
-              <div>
-                <span className={styles.spanTipos}>
-                  Incluir conta no filtro
-                </span>
-                <input
-                  className={styles.spanTipos}
-                  type="checkbox"
-                  name="chkContas"
-                  onChange={handleFiltroContas}
-                />
-                <input
-                  type="search"
-                  className={styles.search}
-                  placeholder="Filtro.."
-                  name="filtro"
-                  maxLength={45}
-                  value={filtro}
-                  onChange={handleFilterChange}
-                />
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div>
+                  <span className={styles.spanTipos}>
+                    Incluir lançamento no filtro
+                  </span>
+                  <select
+                    className={styles.spanTipos}
+                    name="tpLancto"
+                    id="tpLanctoo"
+                    value={tipoVencto}
+                    onChange={handleTipoVencto}
+                  >
+                    {tpsVenctos.map((tpVencto) => {
+                      const { key, value } = tpVencto;
+                      return (
+                        <option key={key} value={key}>
+                          {value}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <span className={styles.spanTipos}>
+                    Incluir conta no filtro
+                  </span>
+                  <input
+                    className={styles.spanTipos}
+                    type="checkbox"
+                    name="chkContas"
+                    onChange={handleFiltroContas}
+                  />
+                  <input
+                    type="search"
+                    className={styles.search}
+                    placeholder="Filtro.."
+                    name="filtro"
+                    maxLength={45}
+                    value={filtro}
+                    onChange={handleFilterChange}
+                  />
+                </div>
               </div>
             </div>
             <hr />
@@ -500,29 +551,31 @@ export default function Lancto() {
                 // Vencido
                 style = {
                   backgroundColor: tomatoGridColors[index % 2],
-                  color: theme.colors.gray11,
+                  // color: theme.colors.gray1,
                   fontWeight: "bold",
                 };
               } else if (lancto.status == 1) {
                 // Vencendo
                 style = {
-                  backgroundColor: amberGridColors[index % 2],
-                  color: theme.colors.gray11,
+                  backgroundColor: yellowGridColors[index % 2],
+                  // color: theme.colors.gray1,
                   fontWeight: "bold",
                 };
               } else if (lancto.status == 2) {
                 // A vencer
                 style = {
                   backgroundColor: greenGridColors[index % 2],
-                  color: theme.colors.gray11,
+                  // color: theme.colors.gray1,
                 };
               } else {
                 // Pago
                 style = {
                   backgroundColor: cyanGridColors[index % 2],
-                  color: theme.colors.gray11,
+                  // color: theme.colors.gray1,
                 };
               }
+
+              style.color = grayGridColors[index % 2];
 
               return (
                 <Row
