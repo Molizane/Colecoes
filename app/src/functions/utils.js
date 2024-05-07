@@ -68,10 +68,28 @@ export function strDateEdit(dt) {
 }
 
 export function strValue(vl) {
+  if (vl == null || vl == undefined) {
+    return "0,00";
+  }
+
   return vl.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function strValue2(vl) {
+  console.log(typeof vl);
+
+  if (!(vl == null || vl == undefined)) {
+    if (typeof vl == "string") {
+      vl = parseFloat(vl);
+    }
+
+    return vl.toFixed(2);
+  }
+
+  return vl;
 }
 
 export function themeColors() {

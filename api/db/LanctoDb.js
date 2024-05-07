@@ -7,10 +7,6 @@ export async function insert(lancto) {
   }
 
   try {
-    if (lancto.idLote == undefined) {
-      lancto.idLote = null;
-    }
-
     const result = await db.query(
       "set @id=null; set @idLote=?; call InsertLancto(?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote",
       [
@@ -112,9 +108,9 @@ export async function reopen(lancto) {
 
 const selectSQL =
   "SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`,\n" +
-  "       l.`IdLote`, l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`,\n" +
-  "       li.`DtVencto`, li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`,\n" +
-  "       li.`VlDesconto`, li.`VlTotal`,\n" +
+  "       l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
+  "       li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,\n" +
+  "       li.`VlTotal`,\n" +
   "       CASE l.`TpLancto`\n" +
   "         WHEN 'S' THEN 'Semanal'\n" +
   "         WHEN 'Q' THEN 'Quinzenal'\n" +
@@ -141,7 +137,7 @@ function mapLancto(lancto) {
     idConta: lancto.IdConta,
     conta: lancto.Conta,
     descricao: lancto.Descricao,
-    idLote: lancto.IdLote,
+    idLote: lancto.Id,
     tpLancto: lancto.TpLancto,
     flgDiasUteis: lancto.FlgDiasUteis,
     parcelas: lancto.Parcelas,
@@ -344,7 +340,7 @@ export async function getByIdTipoConta(id) {
 export async function getByIdLote(id) {
   try {
     const [results, _] = await db.query(
-      "SELECT * FROM `lancto` WHERE `IdLote`=? ORDER BY `DtVencto`",
+      "SELECT * FROM `lancto` WHERE `Id`=? ORDER BY `DtVencto`",
       [id]
     );
 

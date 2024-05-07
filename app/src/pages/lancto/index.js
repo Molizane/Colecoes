@@ -15,7 +15,6 @@ import { FiPlus } from "react-icons/fi";
 import { AiFillEye, AiFillEdit } from "react-icons/ai";
 import { BsFillTrash3Fill } from "react-icons/bs";
 import { MdPriceCheck, MdOutlineMoneyOff } from "react-icons/md";
-import { CollectionsBookmarkOutlined } from "@material-ui/icons";
 
 export default function Lancto() {
   const theme = themeColors();
@@ -65,10 +64,10 @@ export default function Lancto() {
   ];
 
   const tpsExclusao = [
-    { key: "L", value: "Lançto. atual" },
-    { key: "A", value: "Lançto. e anteriores" },
-    { key: "P", value: "Lançto. e posteriores" },
-    { key: "T", value: "Todos os lançtos." },
+    { key: "L", value: "Lançamento atual" },
+    { key: "A", value: "Lançamento atual e anteriores" },
+    { key: "P", value: "Lançamento atual e posteriores" },
+    { key: "T", value: "Todos os lançamentos" },
   ];
 
   const tpsAcrDesc = [
@@ -76,11 +75,11 @@ export default function Lancto() {
     { key: "A", value: "Acréscimo" },
   ];
 
-  const tpsVenctos = [
+  const tiposVencto = [
     { key: "0", value: "Vencidos" },
     { key: "1", value: "Vencendo" },
     { key: "2", value: "A vencer" },
-    { key: "3", value: "Pago" },
+    { key: "3", value: "Pagos" },
     { key: "4", value: "Todos" },
   ];
 
@@ -273,6 +272,26 @@ export default function Lancto() {
     setModalCRUDShow(true);
   };
 
+  const handleView = async function (id, parcela) {
+    document.activeElement.blur();
+    var reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    reg = { ...reg };
+    reg.tpAcrDesc = reg.vlAcrescimo ? "A" : "D";
+    reg.vlAcrescimo = reg.vlAcrescimo ? parseFloat(reg.vlAcrescimo) : 0;
+    reg.vlDesconto = reg.vlDesconto ? parseFloat(reg.vlDesconto) : 0;
+    reg.vlExtra = reg.vlAcrescimo ? reg.vlAcrescimo : reg.vlDesconto;
+    reg.vlLancto = parseFloat(reg.vlLancto);
+    reg.vlTotal = reg.vlLancto + reg.vlAcrescimo - reg.vlDesconto;
+
+    if (!reg.dtPagto) {
+      reg.dtPagto = reg.dtVencto;
+    }
+
+    setLancto(reg);
+    setStatus("view");
+    setModalBaixarShow(true);
+  };
+
   const handleDelete = async function (id, parcela) {
     document.activeElement.blur();
     const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
@@ -330,6 +349,12 @@ export default function Lancto() {
       return;
     }
 
+    if (status === "view") {
+      setStatus("list");
+      setModalBaixarShow(false);
+      return;
+    }
+
     if (status === "delete") {
       await doDelete();
       return;
@@ -364,6 +389,7 @@ export default function Lancto() {
       return;
     }
 
+    setStatus("list");
     setModalCRUDShow(false);
     setRefresh(!refresh);
   };
@@ -388,6 +414,7 @@ export default function Lancto() {
       return;
     }
 
+    setStatus("list");
     setModalBaixarShow(false);
     setRefresh(!refresh);
   };
@@ -405,7 +432,9 @@ export default function Lancto() {
   };
 
   const doDelete = async function () {
+    setStatus("list");
     setModalDeleteShow(false);
+
     const response = await servicoLancto.remove(
       lancto.id,
       lancto.parcela,
@@ -431,6 +460,8 @@ export default function Lancto() {
   const doRefresh = function () {
     setRefresh(!refresh);
   };
+
+  const descrColLen = `col-${tipoVencto == "4" ? "5" : "6"}`;
 
   return (
     <>
@@ -465,13 +496,13 @@ export default function Lancto() {
                   </span>
                   <select
                     className={styles.spanTipos}
-                    name="tpLancto"
-                    id="tpLanctoo"
+                    name="tipoVencto"
+                    id="tipoVencto"
                     value={tipoVencto}
                     onChange={handleTipoVencto}
                   >
-                    {tpsVenctos.map((tpVencto) => {
-                      const { key, value } = tpVencto;
+                    {tiposVencto.map((tipoVencto) => {
+                      const { key, value } = tipoVencto;
                       return (
                         <option key={key} value={key}>
                           {value}
@@ -506,14 +537,20 @@ export default function Lancto() {
           </div>
         </Row>
 
-        <div style={{ marginLeft: "12px", marginRight: "22px" }}>
-          <Row className="m-0" style={{ fontWeight: "bold" }}>
-            <div className="col-1">Situação</div>
-            <div className="col-6">Descrição</div>
-            <div className="col-2">Conta</div>
-            <div className="col-1">Vencimento</div>
-            <div className={`col-1 ${styles.vlLancto}`}>Valor</div>
-            <div className={`col-1 ${styles.refresh} `}>
+        <div style={{ marginLeft: "100px", marginRight: "118px" }}>
+          <Row
+            style={{
+              marginLeft: "1px",
+              marginRight: "1px",
+              fontWeight: "bold",
+            }}
+          >
+            {tipoVencto == "4" && <div className="col-1">Situação</div>}
+            <div className={descrColLen}>Descrição</div>
+            {/* <div className="col-2">Conta</div> */}
+            <div className="col-2">Vencimento</div>
+            <div className={`col-2 ${styles.vlLancto}`}>Valor</div>
+            <div className={`col-2 ${styles.refresh} `}>
               <button
                 type="button"
                 className="btn-refresh"
@@ -526,20 +563,21 @@ export default function Lancto() {
               </button>
             </div>
           </Row>
-        </div>
 
-        <Row className="m-0">
-          <div className="col-12">
-            <hr style={{ marginTop: "1px", marginBottom: "2px" }} />
-          </div>
-        </Row>
+          <Row>
+            <div className="col-12">
+              <hr style={{ marginTop: "1px", marginBottom: "2px" }} />
+            </div>
+          </Row>
+        </div>
 
         <div
           style={{
             height: "79vh",
             overflowY: "scroll",
             overflowX: "hidden",
-            marginLeft: "12px",
+            marginLeft: "100px",
+            marginRight: "100px",
           }}
         >
           {!isLoading &&
@@ -583,16 +621,32 @@ export default function Lancto() {
                   style={style}
                   key={`lancto${lancto.id}${lancto.parcela}`}
                 >
-                  <div className="col-1">{lancto.tipo}</div>
-                  <div className="col-6">{`${lancto.descricao}${lancto.descrParcela}`}</div>
-                  <div className="col-2">{lancto.conta}</div>
-                  <div className="col-1">{strDate(lancto.dtVencto)}</div>
-                  <div className={`col-1 ${styles.vlLancto}`}>
+                  {tipoVencto == "4" && (
+                    <div className="col-1">{lancto.tipo}</div>
+                  )}
+                  <div
+                    className={descrColLen}
+                  >{`${lancto.descricao}${lancto.descrParcela}`}</div>
+                  {/* <div className="col-2">{lancto.conta}</div> */}
+                  <div className="col-2">{strDate(lancto.dtVencto)}</div>
+                  <div className={`col-2 ${styles.vlLancto}`}>
                     {strValue(lancto.vlTotal)}
                   </div>
-                  <div className={`col-1 ${styles.funcoes}`}>
+                  <div className={`col-2 ${styles.funcoes}`}>
                     <div className={styles.refresh}>
-                      {/* <button className="btn-refresh"><AiFillEye className="btn-refresh" data-tooltip-id="atualizarTip" data-tooltip-content="Visualizar" data-tooltip-place="top" /></button> */}
+                      <button
+                        className="btn-refresh"
+                        onClick={() => {
+                          handleView(lancto.id, lancto.parcela);
+                        }}
+                      >
+                        <AiFillEye
+                          className="btn-refresh"
+                          data-tooltip-id="atualizarTip"
+                          data-tooltip-content="Visualizar"
+                          data-tooltip-place="top"
+                        />
+                      </button>
                       <button
                         className="btn-refresh"
                         onClick={() => {
@@ -708,7 +762,7 @@ export default function Lancto() {
             </div>
           </div>
           {status == "delete" && lancto.parcelas > 1 && (
-            <div className="col-12">
+            <div className="col-6">
               <div className="form-group">
                 <label htmlFor="tpExclusao" className="control-label">
                   Tipo de EXCLUSÃO
@@ -949,17 +1003,17 @@ export default function Lancto() {
         </Row>
       </CenteredModal>
 
-      {/* Popup Baixar */}
+      {/* Popup Baixar/Visualizar */}
       <CenteredModal
         tamanho="lg"
         backdrop="static"
-        titulo="Baixar"
+        titulo={status === "payment" ? "Baixar" : "Dados do Lançamento"}
         corTitulo={theme.colors.blue12}
         corConteudo={theme.colors.gray11}
         closeButton={false}
         thumbsUp={false}
         thumbsDown={false}
-        floppy={true}
+        floppy={status === "payment"}
         cancel={true}
         show={modalBaixarShow}
         onConfirm={() => doPopupAction()}
@@ -1044,82 +1098,95 @@ export default function Lancto() {
             </div>
           </div>
 
-          <div className="col-3">
-            <div className="form-group">
-              <label htmlFor="dtPagto" className="control-label">
-                Data Pagamento
-              </label>
-              <input
-                className="form-control"
-                name="dtPagto"
-                id="dtPagto"
-                type="date"
-                required
-                autoFocus
-                value={lancto.dtPagto ? lancto.dtPagto.substring(0, 10) : ""}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+          {(status === "payment" || lancto.flPago) && (
+            <>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="dtPagto" className="control-label">
+                    Data Pagamento
+                  </label>
+                  <input
+                    className="form-control"
+                    name="dtPagto"
+                    id="dtPagto"
+                    type="date"
+                    required
+                    autoFocus
+                    disabled={status == "payment" ? "" : "disabled"}
+                    value={
+                      lancto.dtPagto ? lancto.dtPagto.substring(0, 10) : ""
+                    }
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
 
-          <div className="col-3">
-            <div className="form-group">
-              <label htmlFor="tpAcrDesc" className="control-label">
-                Acréscimo/Desconto
-              </label>
-              <select
-                name="tpAcrDesc"
-                id="tpAcrDesc"
-                className="form-control"
-                value={lancto.tpAcrDesc}
-                onChange={handleInputChange}
-              >
-                {tpsAcrDesc.map((tpAcrDesc) => {
-                  const { key, value } = tpAcrDesc;
-                  return (
-                    <option key={key} value={key}>
-                      {value}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-          </div>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="tpAcrDesc" className="control-label">
+                    Acréscimo/Desconto
+                  </label>
+                  <select
+                    name="tpAcrDesc"
+                    id="tpAcrDesc"
+                    className="form-control"
+                    value={lancto.tpAcrDesc}
+                    disabled={status == "payment" ? "" : "disabled"}
+                    onChange={handleInputChange}
+                  >
+                    {tpsAcrDesc.map((tpAcrDesc) => {
+                      const { key, value } = tpAcrDesc;
+                      return (
+                        <option key={key} value={key}>
+                          {value}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
 
-          <div className="col-3">
-            <div className="form-group">
-              <label htmlFor="vlExtra" className="control-label">
-                Valor A/D
-              </label>
-              <input
-                className="form-control"
-                name="vlExtra"
-                id="vlExtra"
-                type="number"
-                required
-                min={0}
-                step={0.01}
-                pattern="([0-9]{1,3}).([0-9]{1,3})"
-                value={lancto.vlExtra}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="vlExtra" className="control-label">
+                    Valor A/D
+                  </label>
+                  <input
+                    className="form-control"
+                    name="vlExtra"
+                    id="vlExtra"
+                    type={status == "payment" ? "number" : "text"}
+                    required
+                    min={0}
+                    step={0.01}
+                    pattern="([0-9]{1,3}).([0-9]{1,3})"
+                    value={
+                      status == "payment"
+                        ? lancto.vlExtra
+                        : strValue(lancto.vlExtra)
+                    }
+                    disabled={status == "payment" ? "" : "disabled"}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
 
-          <div className="col-3">
-            <div className="form-group">
-              <label htmlFor="vlTotal" className="control-label">
-                Valor Total
-              </label>
-              <input
-                className="form-control"
-                name="vlTotal"
-                id="vlTotal"
-                value={strValue(lancto.vlTotal)}
-                disabled
-              />
-            </div>
-          </div>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="vlTotal" className="control-label">
+                    Valor Total
+                  </label>
+                  <input
+                    className="form-control"
+                    name="vlTotal"
+                    id="vlTotal"
+                    value={strValue(lancto.vlTotal)}
+                    disabled
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </Row>
       </CenteredModal>
     </>

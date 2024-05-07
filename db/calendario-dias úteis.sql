@@ -1,5 +1,3 @@
--- truncate table contas_dev.calendario;
-
 SELECT c.*, DAYNAME(data) AS DOW, COALESCE(f.Feriado, fm.Feriado, fe.Feriado) AS Feriado
 FROM calendario c
 LEFT JOIN feriados f

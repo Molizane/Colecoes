@@ -51,7 +51,7 @@ CREATE TABLE `conta` (
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -114,13 +114,12 @@ CREATE TABLE `lancto` (
   `IdConta` int unsigned NOT NULL,
   `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `IdLote` int unsigned NOT NULL,
-  `Parcelas` int unsigned NOT NULL DEFAULT '1',
+  `Parcelas` int NOT NULL DEFAULT '1',
   `TpLancto` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -143,21 +142,7 @@ CREATE TABLE `lanctoitens` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`IdLancto`,`DtVencto`),
   UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `lote`
---
-
-DROP TABLE IF EXISTS `lote`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `lote` (
-  `Id` int unsigned NOT NULL AUTO_INCREMENT,
-  `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -174,7 +159,7 @@ CREATE TABLE `tipoconta` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -593,11 +578,6 @@ BEGIN
     SET MESSAGE_TEXT = 'Intervalo inválido.';
   END IF;
 
-  INSERT INTO lote (DtCriacao)
-  VALUES (CURRENT_TIMESTAMP);
-
-  SET p_IdLote = LAST_INSERT_ID();
-
   IF p_Parcelas IS NULL OR p_Parcelas < 1 THEN
     SET p_Parcelas = 1;
   END IF;
@@ -609,10 +589,11 @@ BEGIN
   SET p_id = 0;
   SET p_Descricao = TRIM(p_Descricao);
 
-  INSERT INTO `lancto` (`IdConta`, `Descricao`, `IdLote`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
-  VALUES (p_IdConta, p_Descricao, p_IdLote, p_Parcelas, p_Intervalo, p_DiasUteis);
+  INSERT INTO `lancto` (`IdConta`, `Descricao`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
+  VALUES (p_IdConta, p_Descricao, p_Parcelas, p_Intervalo, p_DiasUteis);
 
-  set p_id = LAST_INSERT_ID();
+  SET p_id = LAST_INSERT_ID();
+  SET p_IdLote = LAST_INSERT_ID();
 
   insert_loop: LOOP
     INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `DtVencto`, `VlLancto`)
@@ -973,4 +954,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-05 23:40:28
+-- Dump completed on 2024-05-06 22:46:35
