@@ -38,7 +38,6 @@ export default function Lancto() {
     dtVencto: "",
     vlLancto: 0.0,
     tpLancto: "M",
-    flgDiasUteis: true,
     parcelas: 1,
     parcela: 1,
     flPago: false,
@@ -50,6 +49,9 @@ export default function Lancto() {
     vlTotal: 0.0,
     descrTipo: "",
     descrParcela: "",
+    flgUpdateAll: false,
+    flgGerarParcela: false,
+    flgDifFinal: true,
   };
 
   const tpsLancto = [
@@ -86,6 +88,7 @@ export default function Lancto() {
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
   const [status, setStatus] = useState("list");
+  const [isFirst, setIsFirst] = useState(true);
 
   const [lanctos, setLanctos] = useState([]);
   const [lancto, setLancto] = useState({ ...modeloLancto });
@@ -109,7 +112,7 @@ export default function Lancto() {
   const [filtro, setFiltro] = useState("");
   const [filtrados, setFiltrados] = useState(null);
   const [filtraConta, setFiltraConta] = useState(false);
-  const [tipoVencto, setTipoVencto] = useState("4");
+  const [tipoVencto, setTipoVencto] = useState("0");
 
   const errPopup = function (msg) {
     setTitulo("Erro");
@@ -194,14 +197,36 @@ export default function Lancto() {
 
   const getAll = async () => {
     const response = await servicoLancto.getAll(criterio);
+    setIsLoading(false);
 
     if (response.data.msg) {
       errPopup(response.data.msg);
+      setLanctos([]);
       return;
     }
 
+    if (isFirst) {
+      var min = 0;
+
+      const tiposDistintos = [
+        ...new Set(response.data.map((item) => item.status)),
+      ];
+
+      if (tiposDistintos.length === 0) {
+        min = 4;
+      } else {
+        min = tiposDistintos[0];
+
+        if (min == 3) {
+          min = 4;
+        }
+      }
+
+      setIsFirst(false);
+      setTipoVencto(min);
+    }
+
     setLanctos(response.data);
-    setIsLoading(false);
   };
 
   const handleTipoVencto = (event) => {
@@ -244,12 +269,33 @@ export default function Lancto() {
         lancto.vlDesconto = value;
         lancto.vlTotal = lancto.vlLancto - value;
       }
+    } else if (name == "flgDiasUteis") {
+      value = !lancto.flgDiasUteis;
+    } else if (name == "flgUpdateAll") {
+      value = !lancto.flgUpdateAll;
+    } else if (name == "flgGerarParcela") {
+      value = !lancto.flgGerarParcela;
+    } else if (name == "flgDifFinal") {
+      value = !lancto.flgDifFinal;
     }
 
     setLancto({ ...lancto, [name]: value });
 
     if (name == "descricao") {
       setLenDescricao(value.length);
+    }
+  };
+
+  const handleToggle = (event) => {
+    var name = event.target.name;
+
+    if (name === "flgDiasUteis") {
+      setLancto({ ...lancto, flgDiasUteis: !lancto.flgDiasUteis });
+      return;
+    }
+
+    if (name === "flgUpdateAll") {
+      setLancto({ ...lancto, flgUpdateAll: !lancto.flgUpdateAll });
     }
   };
 
@@ -265,7 +311,7 @@ export default function Lancto() {
   const handleEdit = async function (id, parcela) {
     document.activeElement.blur();
     const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
-    setLancto({ ...reg });
+    setLancto({ ...reg, flgUpdateAll: false });
     setStatus("edit");
     setTituloCRUD("Alteração");
     setLenDescricao(reg.descricao.length);
@@ -453,10 +499,6 @@ export default function Lancto() {
     setFiltraConta(e.target.checked);
   };
 
-  const handleToggle = () => {
-    setLancto({ ...lancto, flgDiasUteis: lancto.flgDiasUteis == 0 });
-  };
-
   const doRefresh = function () {
     setRefresh(!refresh);
   };
@@ -547,7 +589,6 @@ export default function Lancto() {
           >
             {tipoVencto == "4" && <div className="col-1">Situação</div>}
             <div className={descrColLen}>Descrição</div>
-            {/* <div className="col-2">Conta</div> */}
             <div className="col-2">Vencimento</div>
             <div className={`col-2 ${styles.vlLancto}`}>Valor</div>
             <div className={`col-2 ${styles.refresh} `}>
@@ -627,7 +668,6 @@ export default function Lancto() {
                   <div
                     className={descrColLen}
                   >{`${lancto.descricao}${lancto.descrParcela}`}</div>
-                  {/* <div className="col-2">{lancto.conta}</div> */}
                   <div className="col-2">{strDate(lancto.dtVencto)}</div>
                   <div className={`col-2 ${styles.vlLancto}`}>
                     {strValue(lancto.vlTotal)}
@@ -844,27 +884,82 @@ export default function Lancto() {
           </div>
 
           {status === "create" && (
-            <div className="col-3">
-              <div className="form-group">
-                <label htmlFor="parcelas" className="control-label">
-                  Parcelas
-                </label>
-                <input
-                  className="form-control"
-                  name="parcelas"
-                  id="parcelas"
-                  type="number"
-                  required
-                  min={1}
-                  value={lancto.parcelas}
-                  onChange={handleInputChange}
-                />
+            <>
+              <div className="col-2">
+                <div className="form-group">
+                  <label htmlFor="parcelas" className="control-label">
+                    Parcelas
+                  </label>
+                  <input
+                    className="form-control"
+                    name="parcelas"
+                    id="parcelas"
+                    type="number"
+                    required
+                    min={1}
+                    value={lancto.parcelas}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
-            </div>
+              {lancto.parcelas > 1 && (
+                <>
+                  <div className="col-2">
+                    <div className="form-group">
+                      <label
+                        htmlFor="flgGerarParcela"
+                        className="control-label"
+                      >
+                        &nbsp;
+                      </label>
+                      <div className="form-control">
+                        <input
+                          type="checkbox"
+                          name="flgGerarParcela"
+                          id="flgGerarParcela"
+                          checked={lancto.flgGerarParcela}
+                          onChange={handleInputChange}
+                        />
+                        <label
+                          htmlFor="flgGerarParcela"
+                          className={`control-label ${styles.spanTipos}`}
+                        >
+                          Dividir
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  {lancto.flgGerarParcela && (
+                    <div className="col-2">
+                      <div className="form-group">
+                        <label htmlFor="flgDifFinal" className="control-label">
+                          &nbsp;
+                        </label>
+                        <div className="form-control">
+                          <input
+                            type="checkbox"
+                            name="flgDifFinal"
+                            id="flgDifFinal"
+                            checked={lancto.flgDifFinal}
+                            onChange={handleInputChange}
+                          />
+                          <label
+                            htmlFor="flgDifFinal"
+                            className={`control-label ${styles.spanTipos}`}
+                          >
+                            Ajus.últ.
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
           )}
 
           {status === "edit" && (
-            <div className="col-3">
+            <div className="col-2">
               <div className="form-group">
                 <label htmlFor="parcela" className="control-label">
                   Parcela
@@ -880,49 +975,10 @@ export default function Lancto() {
               </div>
             </div>
           )}
-
-          {lancto.parcelas > 1 && (
-            <div className="col-3">
-              <div className="form-group">
-                <label htmlFor="tpLancto" className="control-label">
-                  Intervalo
-                </label>
-                {status === "create" && (
-                  <select
-                    name="tpLancto"
-                    id="tpLancto"
-                    className="form-control"
-                    value={lancto.tpLancto}
-                    onChange={handleInputChange}
-                  >
-                    {tpsLancto.map((tpLancto) => {
-                      const { key, value } = tpLancto;
-                      return (
-                        <option key={key} value={key}>
-                          {value}
-                        </option>
-                      );
-                    })}
-                  </select>
-                )}
-                {status === "edit" && (
-                  <input
-                    name="tpLancto"
-                    id="tpLancto"
-                    type="text"
-                    className="form-control"
-                    disabled
-                    value={lancto.descrTipo}
-                    style={{ width: "100%" }}
-                  />
-                )}
-              </div>
-            </div>
-          )}
         </Row>
 
         <Row>
-          <div className="col-9">
+          <div className={`col-${lancto.parcelas == 1 ? "8" : "6"}`}>
             <div className="form-group">
               <label htmlFor="idConta" className="control-label">
                 Conta
@@ -958,24 +1014,69 @@ export default function Lancto() {
               )}
             </div>
           </div>
+
           {lancto.parcelas > 1 && (
-            <div className="col-3">
-              <div className="form-group">
-                <label htmlFor="flgDiasUteis" className="control-label">
-                  Dias úteis
-                </label>
-                <div className="form-control">
-                  <input
-                    type="checkbox"
-                    name="flgDiasUteis"
-                    id="flgDiasUteis"
-                    checked={lancto.flgDiasUteis}
-                    onChange={handleToggle}
-                    disabled={status == "edit" ? "disabled" : ""}
-                  />
+            <>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="tpLancto" className="control-label">
+                    Intervalo
+                  </label>
+                  {status === "create" && (
+                    <select
+                      name="tpLancto"
+                      id="tpLancto"
+                      className="form-control"
+                      value={lancto.tpLancto}
+                      onChange={handleInputChange}
+                    >
+                      {tpsLancto.map((tpLancto) => {
+                        const { key, value } = tpLancto;
+                        return (
+                          <option key={key} value={key}>
+                            {value}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                  {status === "edit" && (
+                    <input
+                      name="tpLancto"
+                      id="tpLancto"
+                      type="text"
+                      className="form-control"
+                      disabled
+                      value={lancto.descrTipo}
+                      style={{ width: "100%" }}
+                    />
+                  )}
                 </div>
               </div>
-            </div>
+              <div className="col-3">
+                <div className="form-group">
+                  <label htmlFor="flgDiasUteis" className="control-label">
+                    &nbsp;
+                  </label>
+                  <div className="form-control">
+                    <input
+                      type="checkbox"
+                      name="flgDiasUteis"
+                      id="flgDiasUteis"
+                      checked={lancto.flgDiasUteis}
+                      onChange={handleInputChange}
+                      disabled={status == "edit" ? "disabled" : ""}
+                    />
+                    <label
+                      htmlFor="flgDiasUteis"
+                      className={`control-label ${styles.spanTipos}`}
+                    >
+                      Dias úteis
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </Row>
 
@@ -1001,6 +1102,32 @@ export default function Lancto() {
             </div>
           </div>
         </Row>
+
+        <Row></Row>
+        {status == "edit" && lancto.parcelas > 1 && (
+          <div className="col-7">
+            <div className="form-group">
+              {/* <label htmlFor="flgUpdateAll" className="control-label">
+                Atualizar todos os lançamentos com esta descrição
+              </label> */}
+              <div className="form-control">
+                <input
+                  type="checkbox"
+                  name="flgUpdateAll"
+                  id="flgUpdateAll"
+                  checked={lancto.flgUpdateAll}
+                  onChange={handleInputChange}
+                />
+                <label
+                  htmlFor="flgUpdateAll"
+                  className={`control-label ${styles.spanTipos}`}
+                >
+                  Atualizar todos os lançamentos com esta descrição
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
       </CenteredModal>
 
       {/* Popup Baixar/Visualizar */}

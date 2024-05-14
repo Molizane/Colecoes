@@ -8,7 +8,7 @@ export async function insert(lancto) {
 
   try {
     const result = await db.query(
-      "set @id=null; set @idLote=?; call InsertLancto(?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote",
+      "set @id=null; set @idLote=?; call InsertLancto(?,?,?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote",
       [
         lancto.idLote,
         lancto.idConta,
@@ -18,6 +18,8 @@ export async function insert(lancto) {
         lancto.parcelas,
         lancto.tpLancto,
         lancto.flgDiasUteis,
+        lancto.flgGerarParcela,
+        lancto.flgDifFinal,
       ]
     );
 
@@ -34,12 +36,13 @@ export async function update(lancto) {
   }
 
   try {
-    const result = await db.query("call UpdateLancto(?,?,?,?,?)", [
+    const result = await db.query("call UpdateLancto(?,?,?,?,?,?)", [
       lancto.id,
       lancto.parcela,
       lancto.descricao,
       lancto.vlLancto,
       lancto.dtVencto.substr(0, 10),
+      lancto.flgUpdateAll,
     ]);
 
     return { status: 0, msg: "ok" };
@@ -107,7 +110,7 @@ export async function reopen(lancto) {
 }
 
 const selectSQL =
-  "SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, l.`Descricao`,\n" +
+  "SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,\n" +
   "       l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
   "       li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,\n" +
   "       li.`VlTotal`,\n" +
@@ -235,7 +238,7 @@ export async function getAllByCriter(crit) {
         break;
     }
 
-    sql += "ORDER BY li.`DtVencto`, l.`Descricao`";
+    sql += "ORDER BY li.`DtVencto`, li.`Descricao`";
 
     const [results, _] = await db.query(sql, pars);
 

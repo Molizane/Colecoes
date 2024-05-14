@@ -112,7 +112,6 @@ DROP TABLE IF EXISTS `lancto`;
 CREATE TABLE `lancto` (
   `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `IdConta` int unsigned NOT NULL,
-  `Descricao` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Parcelas` int NOT NULL DEFAULT '1',
   `TpLancto` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
@@ -133,6 +132,7 @@ CREATE TABLE `lanctoitens` (
   `IdLancto` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Id único do lançamento',
   `DtVencto` date NOT NULL COMMENT 'Data do vencimento',
   `Parcela` int unsigned NOT NULL DEFAULT '0' COMMENT 'Nº da parcela',
+  `Descricao` varchar(100) COLLATE utf8mb4_bin NOT NULL,
   `VlLancto` double unsigned NOT NULL COMMENT 'Valor da parcela',
   `FlPago` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Flag de Pago',
   `DtPagto` date DEFAULT NULL COMMENT 'Data de pagamento',
@@ -524,6 +524,8 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_Parcelas INT, -- número de registros a serem criados no lote
   IN p_Intervalo CHAR(1), -- (S)emanal, (Q)uinzenal, (M)ensal, (B)imestral, (T)rimestral, (4) Quadrimestral, (6) Semestral, (A)nual
   IN p_DiasUteis INT,
+  IN p_GerarParcela INT,
+  IN p_DifFinal INT,
   OUT p_Id INT,
   INOUT p_IdLote INT
 )
@@ -533,7 +535,13 @@ BEGIN
   DECLARE v_Feriado INT;
   DECLARE v_DiaUtil INT DEFAULT 0;
   DECLARE v_DiaVencto INT DEFAULT DAYOFMONTH(p_DtVencto);
-
+  DECLARE v_ValParcela DOUBLE DEFAULT p_VlLancto;
+  DECLARE v_ValParcPri DOUBLE DEFAULT p_VlLancto;
+  DECLARE v_ValParcUlt DOUBLE DEFAULT p_VlLancto;
+  DECLARE v_p DOUBLE DEFAULT 0;
+  DECLARE v_r DOUBLE DEFAULT 0;
+  DECLARE v_Parcelas INT DEFAULT p_Parcelas;
+  
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
   BEGIN
     GET DIAGNOSTICS CONDITION 1
@@ -542,9 +550,7 @@ BEGIN
       @text = MESSAGE_TEXT;
 
     SET @full_error = CONCAT("ERROR ", @errno, " (", @sqlstate, "): ", @text);
-
     ROLLBACK;
-
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = @full_error;
   END;
@@ -589,15 +595,38 @@ BEGIN
   SET p_id = 0;
   SET p_Descricao = TRIM(p_Descricao);
 
-  INSERT INTO `lancto` (`IdConta`, `Descricao`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
-  VALUES (p_IdConta, p_Descricao, p_Parcelas, p_Intervalo, p_DiasUteis);
+  INSERT INTO `lancto` (`IdConta`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
+  VALUES (p_IdConta, p_Parcelas, p_Intervalo, p_DiasUteis);
 
   SET p_id = LAST_INSERT_ID();
   SET p_IdLote = LAST_INSERT_ID();
+  
+  IF p_Parcelas > 1 AND p_GerarParcela <> 0 THEN
+    SET v_ValParcela = ROUND(p_VlLancto / p_Parcelas, 2);
+    SET v_r = p_VlLancto - (v_ValParcela * (p_Parcelas - 1));
+    
+    IF p_DifFinal = 0 THEN
+      SET v_ValParcPri = v_ValParcela;
+      SET v_ValParcUlt = v_r;
+	ELSE
+      SET v_ValParcPri = v_r;
+      SET v_ValParcUlt = v_ValParcela;
+    END IF;
+  END IF;
 
   insert_loop: LOOP
-    INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `DtVencto`, `VlLancto`)
-    VALUES (p_Id, v_Parcela, v_DtReal, p_VlLancto);
+    IF v_Parcelas <> 1 THEN
+      IF p_Parcelas = v_parcelas THEN
+        SET p_VlLancto = v_ValParcUlt;
+      ELSEIF p_Parcelas = 1 THEN
+        SET p_VlLancto = v_ValParcPri;
+      ELSE
+        SET p_VlLancto = v_ValParcela;
+      END IF;
+	END IF;
+
+    INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`)
+    VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto);
 
     SET p_Parcelas = p_Parcelas - 1;
 
@@ -868,7 +897,8 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
   IN p_Parcela INT,
   IN p_Descricao VARCHAR(100),
   IN p_VlLancto DOUBLE,
-  IN p_DtVencto DATETIME
+  IN p_DtVencto DATETIME,
+  IN p_flgUpdateAll INT
 )
 BEGIN
   DECLARE v_FlPago INT;
@@ -883,16 +913,21 @@ BEGIN
     SET MESSAGE_TEXT = 'Lançamento já fechado.';
   END IF;
 
-  UPDATE `lancto`
-  SET `Descricao` = p_Descricao
-  WHERE `Id` = p_IdLancto;
-
   UPDATE `lanctoitens`
-  SET `VlLancto` = p_VlLancto,
+  SET `Descricao` = p_Descricao,
+      `VlLancto` = p_VlLancto,
       `DtVencto` = p_DtVencto,
       `DtAlteracao` = CURRENT_TIMESTAMP
   WHERE `IdLancto` = p_IdLancto
     AND `Parcela` = p_Parcela;
+
+  IF p_flgUpdateAll <> 0 THEN
+    UPDATE `lanctoitens`
+    SET `Descricao` = p_Descricao,
+        `DtAlteracao` = CURRENT_TIMESTAMP
+  WHERE `IdLancto` = p_IdLancto
+    AND `Parcela` <> p_Parcela;
+  END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -954,4 +989,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-06 22:46:35
+-- Dump completed on 2024-05-14  1:12:17
