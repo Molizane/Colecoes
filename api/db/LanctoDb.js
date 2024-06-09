@@ -1,5 +1,5 @@
 import db from './db.js';
-import { strDateBR, strDateUS } from "../functions/utils.js";
+import { strDateUS } from "../functions/utils.js";
 
 export async function insert(lancto) {
   if (!lancto) {
@@ -8,23 +8,23 @@ export async function insert(lancto) {
 
   try {
     const result = await db.query(
-      "set @id=null; set @idLote=?; call InsertLancto(?,?,?,?,?,?,?,?,?,@id,@idLote); select @id as id, @idLote as idLote",
+      "set @id=null; call InsertLancto(?,?,?,?,?,?,?,?,?,@id); select @id as id",
       [
-        lancto.idLote,
         lancto.idConta,
         lancto.descricao,
         lancto.vlLancto,
         lancto.dtVencto,
         lancto.parcelas,
-        lancto.tpLancto,
+        lancto.tpVencto,
         lancto.flgDiasUteis,
         lancto.flgGerarParcela,
         lancto.flgDifFinal,
       ]
     );
 
-    return { status: 0, msg: "ok", info: result[0][3][0] };
+    return { status: 0, msg: "ok", info: result[0][2][0] };
   } catch (err) {
+    console.log(err);
     logger.info(`insert /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -111,10 +111,10 @@ export async function reopen(lancto) {
 
 const selectSQL =
   "SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,\n" +
-  "       l.`TpLancto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
+  "       l.`tpVencto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
   "       li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,\n" +
   "       li.`VlTotal`,\n" +
-  "       CASE l.`TpLancto`\n" +
+  "       CASE l.`tpVencto`\n" +
   "         WHEN 'S' THEN 'Semanal'\n" +
   "         WHEN 'Q' THEN 'Quinzenal'\n" +
   "         WHEN 'M' THEN 'Mensal'\n" +
@@ -123,7 +123,7 @@ const selectSQL =
   "         WHEN '4' THEN 'Quadrimestral'\n" +
   "         WHEN '6' THEN 'Semestral'\n" +
   "         WHEN 'A' THEN 'Anual'\n" +
-  "         ELSE l.`TpLancto`\n" +
+  "         ELSE l.`tpVencto`\n" +
   "       END AS `DescrTipo`\n" +
   "FROM `lancto` l\n" +
   "INNER JOIN `lanctoitens` li\n" +
@@ -141,7 +141,7 @@ function mapLancto(lancto) {
     conta: lancto.Conta,
     descricao: lancto.Descricao,
     idLote: lancto.Id,
-    tpLancto: lancto.TpLancto,
+    tpVencto: lancto.tpVencto,
     flgDiasUteis: lancto.FlgDiasUteis,
     parcelas: lancto.Parcelas,
     parcela: lancto.Parcela,

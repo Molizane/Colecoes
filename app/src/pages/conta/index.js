@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 
 import Card from "../../components/Card";
-import CenteredModal from "../../components/ModalDialog";
+import CenteredModal from "../../components/CenteredModal";
 
 import servicoConta from "../../services/ContaService";
 import servicoTipo from "../../services/TipoContaService";

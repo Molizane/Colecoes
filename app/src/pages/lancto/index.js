@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaArrowsRotate } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 
-import CenteredModal from "../../components/ModalDialog";
+import CenteredModal from "../../components/CenteredModal";
 import servicoLancto from "../../services/LanctoService";
 import servicoConta from "../../services/ContaService";
 import { strDate, strValue, themeColors } from "../../functions/utils";
@@ -18,12 +18,11 @@ import { MdPriceCheck, MdOutlineMoneyOff } from "react-icons/md";
 
 export default function Lancto() {
   const theme = themeColors();
-  const tomatoGridColors = [theme.colors.red5, theme.colors.red8];
-  //const amberGridColors = [theme.colors.amber5, theme.colors.amber8];
-  const yellowGridColors = [theme.colors.yellow5, theme.colors.yellow8];
+  const redGridColors = [theme.colors.red9, theme.colors.red11];
+  const yellowGridColors = [theme.colors.yellow4, theme.colors.yellow5];
   const greenGridColors = [theme.colors.green5, theme.colors.green8];
   const cyanGridColors = [theme.colors.cyan5, theme.colors.cyan8];
-  const grayGridColors = [theme.colors.gray11, theme.colors.gray1];
+  const slateGridColors = [theme.colors.slate11, theme.colors.slate1];
 
   const modeloLancto = {
     id: null,
@@ -37,7 +36,7 @@ export default function Lancto() {
     parcelas: 1,
     dtVencto: "",
     vlLancto: 0.0,
-    tpLancto: "M",
+    tpVencto: "M",
     parcelas: 1,
     parcela: 1,
     flPago: false,
@@ -124,8 +123,8 @@ export default function Lancto() {
   useEffect(() => {
     //console.log("page_load");
     // Título da aba
-    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos`;
-    document.title = "Lançamentos";
+    //document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Lançamentos de Pagamentos`;
+    document.title = "Lançamentos de Pagamentos";
   }, []);
 
   useEffect(() => {
@@ -164,7 +163,7 @@ export default function Lancto() {
   };
 
   const getAllContas = async () => {
-    const response = await servicoConta.getAll();
+    const response = await servicoConta.getAll("D");
 
     if (response.data.msg) {
       errPopup(response.data.msg);
@@ -525,7 +524,7 @@ export default function Lancto() {
           <div className="col-12">
             <div className={styles.titulo}>
               <div className={styles.titulo2}>
-                <h4>Lançamentos de Contas</h4>
+                <h4>Lançamentos de Pagamentos</h4>
                 <button className="btn-insert" onClick={handleCreate}>
                   <FiPlus />
                   Novo
@@ -629,32 +628,31 @@ export default function Lancto() {
               if (lancto.status == 0) {
                 // Vencido
                 style = {
-                  backgroundColor: tomatoGridColors[index % 2],
-                  // color: theme.colors.gray1,
+                  backgroundColor: redGridColors[index % 2],
+                  color: theme.colors.slate6,
                   fontWeight: "bold",
                 };
               } else if (lancto.status == 1) {
                 // Vencendo
                 style = {
+                  ...style,
                   backgroundColor: yellowGridColors[index % 2],
-                  // color: theme.colors.gray1,
+                  color: theme.colors.blue11,
                   fontWeight: "bold",
                 };
               } else if (lancto.status == 2) {
                 // A vencer
                 style = {
                   backgroundColor: greenGridColors[index % 2],
-                  // color: theme.colors.gray1,
+                  color: theme.colors.slate11,
                 };
               } else {
                 // Pago
                 style = {
                   backgroundColor: cyanGridColors[index % 2],
-                  // color: theme.colors.gray1,
+                  color: theme.colors.red9,
                 };
               }
-
-              style.color = grayGridColors[index % 2];
 
               return (
                 <Row
@@ -1019,19 +1017,19 @@ export default function Lancto() {
             <>
               <div className="col-3">
                 <div className="form-group">
-                  <label htmlFor="tpLancto" className="control-label">
+                  <label htmlFor="tpVencto" className="control-label">
                     Intervalo
                   </label>
                   {status === "create" && (
                     <select
-                      name="tpLancto"
-                      id="tpLancto"
+                      name="tpVencto"
+                      id="tpVencto"
                       className="form-control"
-                      value={lancto.tpLancto}
+                      value={lancto.tpVencto}
                       onChange={handleInputChange}
                     >
-                      {tpsLancto.map((tpLancto) => {
-                        const { key, value } = tpLancto;
+                      {tpsLancto.map((tpVencto) => {
+                        const { key, value } = tpVencto;
                         return (
                           <option key={key} value={key}>
                             {value}
@@ -1042,8 +1040,8 @@ export default function Lancto() {
                   )}
                   {status === "edit" && (
                     <input
-                      name="tpLancto"
-                      id="tpLancto"
+                      name="tpVencto"
+                      id="tpVencto"
                       type="text"
                       className="form-control"
                       disabled
@@ -1107,9 +1105,6 @@ export default function Lancto() {
         {status == "edit" && lancto.parcelas > 1 && (
           <div className="col-7">
             <div className="form-group">
-              {/* <label htmlFor="flgUpdateAll" className="control-label">
-                Atualizar todos os lançamentos com esta descrição
-              </label> */}
               <div className="form-control">
                 <input
                   type="checkbox"
@@ -1212,7 +1207,7 @@ export default function Lancto() {
 
           <div className="col-3">
             <div className="form-group">
-              <label htmlFor="vlLancto" className="control-label">
+              <label htmlFor="tipo" className="control-label">
                 Situação
               </label>
               <input

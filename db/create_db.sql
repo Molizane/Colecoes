@@ -45,13 +45,28 @@ CREATE TABLE `conta` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `IdTipoConta` int NOT NULL,
   `Descricao` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `EhCredito` tinyint NOT NULL DEFAULT '0',
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `efetivado`
+--
+
+DROP TABLE IF EXISTS `efetivado`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `efetivado` (
+  `Data` date NOT NULL,
+  `Valor` decimal(15,2) NOT NULL DEFAULT '0.00',
+  PRIMARY KEY (`Data`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -114,7 +129,7 @@ CREATE TABLE `lancto` (
   `IdConta` int unsigned NOT NULL,
   `DtLancto` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Parcelas` int NOT NULL DEFAULT '1',
-  `TpLancto` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
+  `TpVencto` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'U',
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
@@ -133,16 +148,30 @@ CREATE TABLE `lanctoitens` (
   `DtVencto` date NOT NULL COMMENT 'Data do vencimento',
   `Parcela` int unsigned NOT NULL DEFAULT '0' COMMENT 'Nº da parcela',
   `Descricao` varchar(100) COLLATE utf8mb4_bin NOT NULL,
-  `VlLancto` double unsigned NOT NULL COMMENT 'Valor da parcela',
+  `VlLancto` decimal(15,2) unsigned NOT NULL COMMENT 'Valor da parcela',
   `FlPago` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Flag de Pago',
   `DtPagto` date DEFAULT NULL COMMENT 'Data de pagamento',
-  `VlAcrescimo` double unsigned NOT NULL DEFAULT '0' COMMENT 'Acréscimo',
-  `VlDesconto` double unsigned NOT NULL DEFAULT '0' COMMENT 'Desconto',
-  `VlTotal` double GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL COMMENT 'Valor Total (calculado)',
+  `VlAcrescimo` decimal(15,2) unsigned NOT NULL DEFAULT '0.00' COMMENT 'Acréscimo',
+  `VlDesconto` decimal(15,2) unsigned NOT NULL DEFAULT '0.00' COMMENT 'Desconto',
+  `VlTotal` decimal(15,2) GENERATED ALWAYS AS (((`VlLancto` + `VlAcrescimo`) - `VlDesconto`)) VIRTUAL COMMENT 'Valor Total (calculado)',
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`IdLancto`,`DtVencto`),
   UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `planejado`
+--
+
+DROP TABLE IF EXISTS `planejado`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `planejado` (
+  `Data` date NOT NULL,
+  `Valor` decimal(15,2) NOT NULL DEFAULT '0.00',
+  PRIMARY KEY (`Data`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,11 +184,12 @@ DROP TABLE IF EXISTS `tipoconta`;
 CREATE TABLE `tipoconta` (
   `Id` int unsigned NOT NULL AUTO_INCREMENT,
   `Descricao` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `EhCredito` tinyint NOT NULL DEFAULT '0',
   `DtCriacao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -222,11 +252,11 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `CloseLancto`(
   IN p_Id INT,
   IN p_IdParcela INT,
   IN p_DtPagto DATETIME,
-  IN p_VlAcrescimo DOUBLE,
-  IN p_VlDesconto DOUBLE
+  IN p_VlAcrescimo DECIMAL(15,2),
+  IN p_VlDesconto DECIMAL(15,2)
 )
 BEGIN
-  DECLARE v_VlLancto DOUBLE;
+  DECLARE v_VlLancto DECIMAL(15,2);
 
   IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id) THEN
     SIGNAL SQLSTATE '45000'
@@ -312,27 +342,124 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `DeleteLancto`(
   IN p_Tipo CHAR(1)
 )
 BEGIN
+  DECLARE done INT DEFAULT FALSE;
+  DECLARE v_VlLancto DECIMAL(15,2);
+  DECLARE v_DtVencto DATE;
+  DECLARE v_FlPago TINYINT;
+  DECLARE v_MinDate DATE;
+  DECLARE v_MaxDate DATE;
+  DECLARE v_Signal INT DEFAULT 1;
+
+  DECLARE crsr CURSOR FOR SELECT `DtVencto`, `VlLancto`, `FlPago` FROM `tmpitens` ORDER BY `DtVencto`;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION
+  BEGIN
+    GET DIAGNOSTICS CONDITION 1 @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+    -- SET @full_error = CONCAT("ERROR #", @errno, " (", @sqlstate, "): ", @text);
+    SET @full_error = COALESCE(@text, "Not defined");
+    -- SELECT @full_error;
+    
+    DROP TEMPORARY TABLE IF EXISTS `tmpitens`;
+    ROLLBACK;
+
+    SIGNAL SQLSTATE '42000'
+    SET MESSAGE_TEXT = @full_error;
+  END;
+
+  START TRANSACTION;
+
+  DROP TEMPORARY TABLE IF EXISTS `tmpitens`;
+  
+  CREATE TEMPORARY TABLE `tmpitens`
+  (
+    `IdLancto` INT, 
+    `Parcela` INT, 
+    `VlLancto` DECIMAL(15,2), 
+    `DtVencto` DATE,
+    `FlPago` INT
+  );
+
   IF p_Tipo = 'T' THEN
-    DELETE FROM `lanctoitens`
-    WHERE `IdLancto` = p_Id;
+    INSERT INTO `tmpitens` (`IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`)
+      SELECT `IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`
+      FROM `lanctoitens`
+      WHERE `IdLancto` = p_Id;
   ELSEIF  p_Tipo = 'A' THEN
-    DELETE FROM `lanctoitens`
-    WHERE `IdLancto` = p_Id
+    INSERT INTO `tmpitens` (`IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`)
+      SELECT `IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`
+      FROM `lanctoitens`
+      WHERE `IdLancto` = p_Id
       AND `Parcela` <= p_Parcela;
   ELSEIF  p_Tipo = 'P' THEN
-    DELETE FROM `lanctoitens`
-    WHERE `IdLancto` = p_Id
+    INSERT INTO `tmpitens` (`IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`)
+      SELECT `IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`
+      FROM `lanctoitens`
+      WHERE `IdLancto` = p_Id
       AND `Parcela` >= p_Parcela;
   ELSE
-    DELETE FROM `lanctoitens`
-    WHERE `IdLancto` = p_Id
+    INSERT INTO `tmpitens` (`IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`)
+      SELECT `IdLancto`, `Parcela`, `VlLancto`, `DtVencto`, `FlPago`
+      FROM `lanctoitens`
+      WHERE `IdLancto` = p_Id
       AND `Parcela` = p_Parcela;
   END IF;
+  
+  -- Se não for lançamento de crédito, inverte o sinal
+  IF p_Parcela <> 0 THEN
+    -- UPDATE `tmpitens` SET `VlLancto` = -`VlLancto`;
+    SET v_Signal = -1;
+  END IF;
+
+  OPEN crsr;
+
+  -- Atualiza os registros 
+  upd_loop: LOOP
+    FETCH crsr INTO v_DtVencto, v_VlLancto, v_FlPago;
+
+    IF done THEN
+      LEAVE upd_loop;
+    END IF;
+
+    UPDATE `planejado`
+    SET `Valor` = `Valor` - v_VlLancto * v_Signal
+    WHERE `Data` >= v_DtVencto;
+
+    -- Se a parcela já estava paga, ajusta os registros de "efetivado"
+    IF v_FlPago <> 0 THEN
+      UPDATE `efetivado`
+      SET `Valor` = `Valor` - v_VlLancto * v_Signal
+      WHERE `Data` >= v_DtVencto;
+    END IF;
+  END LOOP;
+
+  CLOSE crsr;
+
+  -- Elimina os registros no intervalo que tem o valor igual a zero
+  SELECT MIN(`DtVencto`), MAX(`DtVencto`) INTO v_MinDate, v_MaxDate
+  FROM `tmpitens`;
+
+  DELETE FROM `planejado`
+  WHERE `Data` BETWEEN v_MinDate AND v_MaxDate
+  AND `Valor` = 0;
+
+  DELETE FROM `efetivado`
+  WHERE `Data` BETWEEN v_MinDate AND v_MaxDate
+  AND `Valor` = 0;
+
+  DELETE FROM `lanctoitens`
+  WHERE EXISTS (SELECT 1
+                FROM `tmpitens`
+                WHERE `IdLancto` = `lanctoitens`.`IdLancto`
+                AND `Parcela` = `lanctoitens`.`Parcela`);
 
   IF p_Tipo = 'T' OR NOT EXISTS(SELECT 1 FROM `lanctoitens` WHERE `IdLancto` = p_Id) THEN
     DELETE FROM `lancto`
     WHERE `Id` = p_Id;
   END IF;
+
+  DROP TEMPORARY TABLE `tmpitens`;
+  COMMIT;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -370,6 +497,58 @@ BEGIN
 
   DELETE FROM `TipoConta`
   WHERE `Id` = p_Id;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DiasUteis` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`angelo`@`%` PROCEDURE `DiasUteis`(INOUT p_DataRef DATE)
+BEGIN
+  DECLARE v_Dt DATE DEFAULT p_DataRef;
+  DECLARE v_Feriado INT;
+  DECLARE v_DiaUtil INT DEFAULT 0;
+  
+  IF DAYOFWEEK(v_Dt) = 1 THEN -- Domingo
+    SET v_Dt = ADDDATE(v_Dt, INTERVAL 1 DAY);
+  ELSEIF DAYOFWEEK(v_Dt) = 2 THEN -- Sábado
+    SET v_Dt = ADDDATE(v_Dt, INTERVAL 2 DAY);
+  END IF;
+
+  diasuteis: LOOP
+    SELECT SQL_CALC_FOUND_ROWS `Feriado`, `DiaUtil` INTO v_Feriado, v_DiaUtil
+    FROM `calendario`
+    WHERE `Data` = v_Dt;
+
+    -- Não achou a data no calendário
+    IF FOUND_ROWS() = 0 THEN
+      LEAVE diasuteis;
+    END IF;
+
+    IF v_Feriado = 1 THEN
+      SET v_Dt = ADDDATE(v_Dt, INTERVAL 1 DAY);
+
+      IF DAYOFWEEK(v_Dt) = 1 THEN -- Domingo
+        SET v_Dt = ADDDATE(v_Dt, INTERVAL 1 DAY);
+      ELSEIF DAYOFWEEK(v_Dt) = 2 THEN -- Sábado
+        SET v_Dt = ADDDATE(v_Dt, INTERVAL 2 DAY);
+      END IF;
+	ELSE
+      LEAVE diasuteis;
+    END IF;
+  END LOOP;
+
+  SET p_DataRef = v_Dt;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -485,7 +664,8 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertConta`(
   IN p_IdTipoConta INT,
-  IN p_Descricao VARCHAR(45)
+  IN p_Descricao VARCHAR(45),
+  IN p_EhCredito TINYINT
 )
 BEGIN
   IF NOT (SELECT 1 FROM `TipoConta` WHERE `Id` = p_IdTipoConta) THEN
@@ -498,8 +678,8 @@ BEGIN
     SET MESSAGE_TEXT = 'Conta já existe para esse Tipo de Conta.';
   END IF;
 
-  INSERT INTO `conta` (`IdTipoConta`, `Descricao`)
-  VALUES (p_IdTipoConta, TRIM(p_Descricao));
+  INSERT INTO `conta` (`IdTipoConta`, `Descricao`, `EhCredito`)
+  VALUES (p_IdTipoConta, TRIM(p_Descricao), COALESCE(p_EhCredito, 0));
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -519,15 +699,14 @@ DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_IdConta INT,
   IN p_Descricao VARCHAR(100),
-  IN p_VlLancto DOUBLE,
+  IN p_VlLancto DECIMAL(15,2),
   IN p_DtVencto DATE,
   IN p_Parcelas INT, -- número de registros a serem criados no lote
   IN p_Intervalo CHAR(1), -- (S)emanal, (Q)uinzenal, (M)ensal, (B)imestral, (T)rimestral, (4) Quadrimestral, (6) Semestral, (A)nual
   IN p_DiasUteis INT,
   IN p_GerarParcela INT,
   IN p_DifFinal INT,
-  OUT p_Id INT,
-  INOUT p_IdLote INT
+  OUT p_Id INT
 )
 BEGIN
   DECLARE v_DtReal DATE DEFAULT p_DtVencto;
@@ -535,11 +714,11 @@ BEGIN
   DECLARE v_Feriado INT;
   DECLARE v_DiaUtil INT DEFAULT 0;
   DECLARE v_DiaVencto INT DEFAULT DAYOFMONTH(p_DtVencto);
-  DECLARE v_ValParcela DOUBLE DEFAULT p_VlLancto;
-  DECLARE v_ValParcPri DOUBLE DEFAULT p_VlLancto;
-  DECLARE v_ValParcUlt DOUBLE DEFAULT p_VlLancto;
-  DECLARE v_p DOUBLE DEFAULT 0;
-  DECLARE v_r DOUBLE DEFAULT 0;
+  DECLARE v_ValParcela DECIMAL(15,2) DEFAULT p_VlLancto;
+  DECLARE v_ValParcPri DECIMAL(15,2) DEFAULT p_VlLancto;
+  DECLARE v_ValParcUlt DECIMAL(15,2) DEFAULT p_VlLancto;
+  DECLARE v_p DECIMAL(15,2) DEFAULT 0;
+  DECLARE v_r DECIMAL(15,2) DEFAULT 0;
   DECLARE v_Parcelas INT DEFAULT p_Parcelas;
   
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -549,8 +728,11 @@ BEGIN
       @errno = MYSQL_ERRNO,
       @text = MESSAGE_TEXT;
 
-    SET @full_error = CONCAT("ERROR ", @errno, " (", @sqlstate, "): ", @text);
+    -- SET @full_error = CONCAT("ERROR ", @errno, " (", @sqlstate, "): ", @text);
+    SET @full_error = COALESCE(@text, "Not defined");
+
     ROLLBACK;
+
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = @full_error;
   END;
@@ -579,43 +761,52 @@ BEGIN
 
   SET p_Intervalo = UPPER(p_Intervalo);
 
-  IF p_Intervalo NOT IN ('S', 'Q', 'M', 'B', 'T', '4', '6', 'A') THEN
+  IF p_Parcelas IS NULL OR p_Parcelas < 0 THEN
+    SET p_Parcelas = 1;
+  END IF;
+
+  IF p_Parcelas = 0 THEN -- Lançamento de crédito
+    SET p_Intervalo = 'U'; -- Único
+    SET p_DiasUteis = 0; -- Ajuste para conformidade
+  ELSEIF p_Intervalo NOT IN ('S', 'Q', 'M', 'B', 'T', '4', '6', 'A') THEN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Intervalo inválido.';
   END IF;
 
-  IF p_Parcelas IS NULL OR p_Parcelas < 1 THEN
-    SET p_Parcelas = 1;
-  END IF;
-
-  IF p_DiasUteis <> 0 THEN
-    SET p_DiasUteis = 1;
+  -- Ajusta dias úteis, caso seja informado errado
+  IF p_DiasUteis NOT IN (0, 1) THEN
+    SET p_DiasUteis = 0;
   END IF;
 
   SET p_id = 0;
-  SET p_Descricao = TRIM(p_Descricao);
+  SET p_Descricao = TRIM(p_Descricao); -- Elimina espaços na descrição
 
-  INSERT INTO `lancto` (`IdConta`, `Parcelas`, `TpLancto`, `FlgDiasUteis`)
+  INSERT INTO `lancto` (`IdConta`, `Parcelas`, `TpVencto`, `FlgDiasUteis`)
   VALUES (p_IdConta, p_Parcelas, p_Intervalo, p_DiasUteis);
 
-  SET p_id = LAST_INSERT_ID();
-  SET p_IdLote = LAST_INSERT_ID();
+  SET p_id = LAST_INSERT_ID(); -- Retorna o ID do registro criado
   
+  -- Tratamento de cálculo de parcelas, quando informado o valor total do débito
   IF p_Parcelas > 1 AND p_GerarParcela <> 0 THEN
     SET v_ValParcela = ROUND(p_VlLancto / p_Parcelas, 2);
     SET v_r = p_VlLancto - (v_ValParcela * (p_Parcelas - 1));
     
-    IF p_DifFinal = 0 THEN
+    IF p_DifFinal = 0 THEN -- Se o resto da divisão das parcelas devem ser aplicado na última
       SET v_ValParcPri = v_ValParcela;
       SET v_ValParcUlt = v_r;
-	ELSE
+	ELSE -- Se o resto da divisão das parcelas devem ser aplicado na primeira
       SET v_ValParcPri = v_r;
       SET v_ValParcUlt = v_ValParcela;
     END IF;
   END IF;
 
+  IF p_DiasUteis <> 0 THEN
+    CALL `DiasUteis`(v_DtReal);
+  END IF;
+
   insert_loop: LOOP
-    IF v_Parcelas <> 1 THEN
+    -- Ajuste do valor das parcelas, primeira e última
+    IF v_Parcelas > 1 THEN
       IF p_Parcelas = v_parcelas THEN
         SET p_VlLancto = v_ValParcUlt;
       ELSEIF p_Parcelas = 1 THEN
@@ -627,15 +818,59 @@ BEGIN
 
     INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`)
     VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto);
+    
+    -- Se não existir um registro na data da parcela em "planejado", cria e inicializa o valor (saldo do dia anterior)
+    IF NOT EXISTS (SELECT 1 FROM `planejado` WHERE `Data` = v_DtReal) THEN
+      SET v_p = 0;
+      
+      -- Obtém o saldo da data anterior
+      SELECT `Valor`
+      INTO v_p
+      FROM `planejado`
+      WHERE `Data` < v_DtReal
+      ORDER BY `Data` DESC
+      LIMIT 1;
+     
+      INSERT INTO `planejado` (`Data`, `Valor`)
+      VALUES (v_DtReal, COALESCE(v_p, 0));
+    END IF;
+
+    -- Ajusta o valor dos registros atual e futuro com os saldos
+    UPDATE `planejado`
+    SET Valor = Valor + p_VlLancto * CASE WHEN p_Parcelas = 0 THEN 1 ELSE -1 END
+    WHERE `Data` >= v_DtReal;
+    
+    -- Se for um crédito, então atualiza também a tabela "efetivado"
+    IF p_Parcelas = 0 THEN
+      IF NOT EXISTS (SELECT 1 FROM `efetivado` WHERE `Data` = v_DtReal) THEN
+        SET v_p = 0;
+      
+        -- Obtém o saldo da data anterior
+        SELECT `Valor`
+        INTO v_p
+        FROM `efetivado`
+        WHERE `Data` < v_DtReal
+        ORDER BY `Data` DESC
+        LIMIT 1;
+     
+        INSERT INTO `efetivado` (`Data`, `Valor`)
+        VALUES (v_DtReal, COALESCE(v_p, 0));
+      END IF;
+
+      UPDATE `efetivado`
+      SET Valor = Valor + p_VlLancto
+      WHERE `Data` >= v_DtReal;
+    END IF;
 
     SET p_Parcelas = p_Parcelas - 1;
 
-    IF p_Parcelas = 0 THEN
+    IF p_Parcelas <= 0 THEN -- < 0 => registro de crédito. = 0 => registro de débito
       LEAVE insert_loop;
     END IF;
 
     SET v_Parcela = v_Parcela + 1;
 
+    -- Calcula a próxima data de vencimento
     SET p_DtVencto = CASE p_Intervalo
                           WHEN 'S' THEN ADDDATE(p_DtVencto, INTERVAL 1 WEEK)
                           WHEN 'Q' THEN ADDDATE(p_DtVencto, INTERVAL 2 WEEK)
@@ -657,27 +892,9 @@ BEGIN
 
     SET v_DtReal = p_DtVencto;
 
+    -- Quando o movimento for em dias úteis, ajusta a data
     IF p_DiasUteis <> 0 THEN
-      diasuteis: LOOP
-        SELECT SQL_CALC_FOUND_ROWS Feriado, DiaUtil INTO v_Feriado, v_DiaUtil
-        FROM calendario
-        WHERE `Data` = v_DtReal;
-
-        -- Não achou a data no calendário
-        IF FOUND_ROWS() = 0 THEN
-          LEAVE diasuteis;
-        END IF;
-
-        IF v_Feriado = 1 THEN
-          SET v_DiaUtil = 0;
-        END IF;
-
-        IF v_DiaUtil = 0 THEN
-          SET v_DtReal = ADDDATE(v_DtReal, INTERVAL 1 DAY);
-        ELSE
-          LEAVE diasuteis;
-        END IF;
-      END LOOP;
+      CALL `DiasUteis`(v_DtReal);
     END IF;
   END LOOP insert_loop;
 
@@ -699,7 +916,8 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertTipoConta`(
-  IN p_Descricao VARCHAR(45)
+  IN p_Descricao VARCHAR(45),
+  IN p_EhCredito TINYINT
 )
 BEGIN
   IF p_Descricao IS NULL OR TRIM(p_Descricao) = '' THEN
@@ -712,7 +930,7 @@ BEGIN
     SET MESSAGE_TEXT = 'Já existe.';
   END IF;
 
-  INSERT INTO `TipoConta` (`Descricao`) VALUES (TRIM(p_Descricao));
+  INSERT INTO `TipoConta` (`Descricao`, `EhCredito`) VALUES (TRIM(p_Descricao), COALESCE(p_EhCredito, 0));
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -896,14 +1114,18 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
   IN p_IdLancto INT,
   IN p_Parcela INT,
   IN p_Descricao VARCHAR(100),
-  IN p_VlLancto DOUBLE,
+  IN p_VlLancto DECIMAL(15,2),
   IN p_DtVencto DATETIME,
   IN p_flgUpdateAll INT
 )
 BEGIN
   DECLARE v_FlPago INT;
+  DECLARE v_DtVencto DATE;
+  DECLARE v_VlLancto DECIMAL(15,2);
+  DECLARE v_Dif DECIMAL(15,2);
 
-  SELECT `FlPago` INTO v_FlPago
+  SELECT `VlLancto`, `DtVencto`, `FlPago`
+  INTO v_VlLancto, v_DtVencto, v_FlPago
   FROM `lanctoitens`
   WHERE `IdLancto` = p_IdLancto
     AND `Parcela` = p_Parcela;
@@ -925,8 +1147,15 @@ BEGIN
     UPDATE `lanctoitens`
     SET `Descricao` = p_Descricao,
         `DtAlteracao` = CURRENT_TIMESTAMP
-  WHERE `IdLancto` = p_IdLancto
+    WHERE `IdLancto` = p_IdLancto
     AND `Parcela` <> p_Parcela;
+  END IF;
+  
+  IF v_VlLancto <> p_VlLancto THEN
+    SET v_Dif = v_VlLancto - p_VlLancto;
+    UPDATE `planejado`
+    SET `Valor` = `Valor` + v_Dif
+    WHERE `Data` >= v_DtVencto;
   END IF;
 END ;;
 DELIMITER ;
@@ -989,4 +1218,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-14  1:12:17
+-- Dump completed on 2024-06-08 21:02:00

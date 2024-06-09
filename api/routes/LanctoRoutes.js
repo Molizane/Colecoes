@@ -40,7 +40,6 @@ router.put("/", async (req, res, next) => {
   try {
     logger.info(`PUT /lancto`); // - ${req.body}`);
     const result = await update(req.body);
-    console.log(req.body);
 
     if (result.status) {
       res.status(500).send(result);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Card from '../../components/Card'
-import CenteredModal from '../../components/ModalDialog';
+import CenteredModal from "../../components/CenteredModal";
 
 const Home = () => {
   const [modalShow, setModalShow] = useState(false);

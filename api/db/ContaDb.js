@@ -6,9 +6,10 @@ export async function insert(conta) {
   }
 
   try {
-    await db.query("call InsertConta(?,?)", [
+    await db.query("call InsertConta(?,?,?)", [
       conta.idTipoConta,
       conta.descricao,
+      conta.ehCredito,
     ]);
     return { status: 0, msg: "ok" };
   } catch (err) {
@@ -23,7 +24,7 @@ export async function update(conta) {
   }
 
   try {
-    await db.query("call UpdateConta(?, ?)", [conta.id, conta.descricao]);
+    await db.query("call UpdateConta(?,?)", [conta.id, conta.descricao]);
     return { status: 0, msg: "ok" };
   } catch (err) {
     logger.info(`update /Conta - ${err.sqlMessage}`);
@@ -43,6 +44,36 @@ export async function exclude(id) {
     return { status: 0, msg: "ok" };
   } catch (err) {
     logger.info(`exclude /Conta/${id} - ${err.sqlMessage}`);
+    return { status: err.sqlState, msg: err.sqlMessage };
+  }
+}
+
+export async function getByType(type) {
+  try {
+    const [results, _] = await db.query(
+      "SELECT t.*, c.Descricao AS TipoConta," +
+        " (SELECT COUNT(1)" +
+        " FROM lancto c" +
+        " WHERE c.IdConta = t.Id) as qtde" +
+        " FROM conta AS t" +
+        " INNER JOIN tipoconta c" +
+        " ON c.Id = t.IdTipoConta" +
+        " WHERE c.EhCredito = ?" +
+        " ORDER BY c.Descricao, t.Descricao",
+      [type == "C" ? 1 : 0]
+    );
+
+    return results.map((result) => {
+      return {
+        id: result.Id,
+        descricao: result.Descricao,
+        idTipoConta: result.IdTipoConta,
+        tipoConta: result.TipoConta,
+        qtde: result.qtde,
+      };
+    });
+  } catch (err) {
+    logger.info(`get /Conta - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
 }

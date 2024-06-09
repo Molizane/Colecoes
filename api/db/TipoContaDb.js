@@ -1,31 +1,37 @@
 import db from './db.js';
 
 export async function insert(tipoConta) {
-    if (!tipoConta) {
-        return { status: -1, 'msg': 'Registro não informado' };
-    }
+  if (!tipoConta) {
+    return { status: -1, msg: "Registro não informado" };
+  }
 
-    try {
-        await db.query('call InsertTipoConta(?)', [tipoConta.descricao]);
-        return { status: 0, 'msg': 'ok' };
-    } catch (err) {
-        logger.info(`insert /TipoConta - ${err.sqlMessage}`);
-        return { status: err.sqlState, 'msg': err.sqlMessage };
-    }
+  try {
+    await db.query("call InsertTipoConta(?,?)", [
+      tipoConta.descricao,
+      tipoConta.ehCredito,
+    ]);
+    return { status: 0, msg: "ok" };
+  } catch (err) {
+    logger.info(`insert /TipoConta - ${err.sqlMessage}`);
+    return { status: err.sqlState, msg: err.sqlMessage };
+  }
 }
 
 export async function update(tipoConta) {
-    if (!tipoConta) {
-        return { status: -1, 'msg': 'Registro não informado' };
-    }
+  if (!tipoConta) {
+    return { status: -1, msg: "Registro não informado" };
+  }
 
-    try {
-        await db.query('call UpdateTipoConta(?, ?)', [tipoConta.id, tipoConta.descricao]);
-        return { status: 0, 'msg': 'ok' };
-    } catch (err) {
-        logger.info(`update /TipoConta - ${err.sqlMessage}`);
-        return { status: err.sqlState, 'msg': err.sqlMessage };
-    }
+  try {
+    await db.query("call UpdateTipoConta(?,?)", [
+      tipoConta.id,
+      tipoConta.descricao,
+    ]);
+    return { status: 0, msg: "ok" };
+  } catch (err) {
+    logger.info(`update /TipoConta - ${err.sqlMessage}`);
+    return { status: err.sqlState, msg: err.sqlMessage };
+  }
 }
 
 export async function exclude(id) {

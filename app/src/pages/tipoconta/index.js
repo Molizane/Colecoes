@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import servico from "../../services/TipoContaService";
 import styles from "./styles.module.scss";
 import Card from "../../components/Card";
-import CenteredModal from "../../components/ModalDialog";
+import CenteredModal from "../../components/CenteredModal";
 import { FiPlus } from "react-icons/fi";
 import { themeColors } from "../../functions/utils";
 

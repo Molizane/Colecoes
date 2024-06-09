@@ -7,6 +7,8 @@ import {
   yellow,
   amber,
   cyan,
+  indigo,
+  slate,
 } from "@radix-ui/colors";
 
 export function trataErrosApi(erro) {
@@ -103,6 +105,8 @@ export function themeColors() {
       ...yellow,
       ...amber,
       ...cyan,
+      ...indigo,
+      ...slate,
     },
   };
 }
