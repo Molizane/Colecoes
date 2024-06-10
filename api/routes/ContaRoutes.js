@@ -1,4 +1,5 @@
 import express from "express";
+
 import { insert, update, exclude, getById, getByType } from "../db/ContaDb.js";
 
 const router = express.Router();
@@ -80,6 +81,7 @@ router.get("/:id?", async (req, res, next) => {
       req.params.id === "c" ||
       req.params.id === "C"
     ) {
+      logger.info(`GET /conta/${req.params.id.toUpperCase()} `);
       result = await getByType(req.params.id.toUpperCase());
     } else {
       if (!isNaN(req.params.id)) {

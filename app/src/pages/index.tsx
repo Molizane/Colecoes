@@ -2,20 +2,17 @@ import { useEffect, useState } from "react";
 import { Calendar } from "react-multi-date-picker";
 import gregorian_pt_br from "react-date-object/locales/gregorian_pt_br";
 import styles from "../styles/Home.module.scss";
+import { Row } from "react-bootstrap";
 
 const Home = () => {
   const [date, setDate] = useState(new Date());
   const [days, setDays] = useState([{ dia: 0, status: "" }]);
 
   const handleDayChanged = (e: any) => {
-    console.log("handleDayChanged");
-    console.log(e);
     setDate(e);
   };
 
   const handleMonthChanged = (e: any) => {
-    console.log("handleMonthChanged");
-    console.log(e);
     //setDate(e);
   };
 
@@ -34,7 +31,7 @@ const Home = () => {
 
   return (
     <div className={styles.container}>
-      <div className="row m-0">
+      <Row className="m-0">
         <div className="col-12">
           <div className={styles.titulo}>
             <div className={styles.titulo2}>
@@ -71,7 +68,7 @@ const Home = () => {
             }}
           />
         </div>
-      </div>
+      </Row>
     </div>
   );
 };

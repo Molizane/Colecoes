@@ -52,7 +52,7 @@ CREATE TABLE `conta` (
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -133,7 +133,7 @@ CREATE TABLE `lancto` (
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,7 +157,7 @@ CREATE TABLE `lanctoitens` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`IdLancto`,`DtVencto`),
   UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -189,7 +189,7 @@ CREATE TABLE `tipoconta` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -816,9 +816,14 @@ BEGIN
       END IF;
 	END IF;
 
-    INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`)
-    VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto);
-    
+    IF p_Parcelas = 0 THEN -- Lançamento de crédito
+      INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`, `FlPago`, `DtPagto`)
+      VALUES (p_Id, 0, p_Descricao, v_DtReal, p_VlLancto, 1, v_DtReal);
+    ELSE
+      INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`)
+      VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto);
+	END IF;    
+
     -- Se não existir um registro na data da parcela em "planejado", cria e inicializa o valor (saldo do dia anterior)
     IF NOT EXISTS (SELECT 1 FROM `planejado` WHERE `Data` = v_DtReal) THEN
       SET v_p = 0;
@@ -1218,4 +1223,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-08 21:02:00
+-- Dump completed on 2024-06-10  2:36:17

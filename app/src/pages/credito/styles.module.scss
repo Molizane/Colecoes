@@ -1,0 +1,44 @@
+.container {
+  height: 80vh;
+}
+
+.titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-left: 10px;
+  width: 100%;
+}
+
+.titulo2 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.funcoes {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-items: center;
+  justify-content: flex-end;
+  padding-right: 5px;
+}
+
+.refresh {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.spanTipos {
+  margin: 0 5px;
+}
+
+.vlLancto {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+}

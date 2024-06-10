@@ -25,9 +25,9 @@ const remove = async (id) => {
   }
 };
 
-const getAll = async () => {
+const getAll = async (tipo) => {
   try {
-    return await http.get("/tipoconta");
+    return await http.get(`/tipoconta/${tipo}`);
   } catch (ex) {
     return trataErrosApi(ex);
   }

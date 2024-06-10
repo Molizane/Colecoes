@@ -3,9 +3,10 @@ import { FaArrowsRotate } from "react-icons/fa6";
 import { Tooltip } from "react-tooltip";
 
 import CenteredModal from "../../components/CenteredModal";
-import servicoLancto from "../../services/LanctoService";
-import servicoConta from "../../services/ContaService";
+import contaService from "../../services/ContaService";
+import lanctoService from "../../services/LanctoService";
 import { strDate, strValue, themeColors } from "../../functions/utils";
+import LanctoObj from "../../classes/LanctoObj";
 
 import "react-tooltip/dist/react-tooltip.css";
 import styles from "./styles.module.scss";
@@ -22,36 +23,7 @@ export default function Lancto() {
   const yellowGridColors = [theme.colors.yellow4, theme.colors.yellow5];
   const greenGridColors = [theme.colors.green5, theme.colors.green8];
   const cyanGridColors = [theme.colors.cyan5, theme.colors.cyan8];
-  const slateGridColors = [theme.colors.slate11, theme.colors.slate1];
-
-  const modeloLancto = {
-    id: null,
-    idLote: 0,
-    status: "",
-    tipo: "",
-    descricao: "",
-    idConta: 0,
-    conta: "",
-    flgDiasUteis: true,
-    parcelas: 1,
-    dtVencto: "",
-    vlLancto: 0.0,
-    tpVencto: "M",
-    parcelas: 1,
-    parcela: 1,
-    flPago: false,
-    dtPagto: "",
-    tpAcrDesc: "",
-    vlExtra: 0.0,
-    vlAcrescimo: 0.0,
-    vlDesconto: 0.0,
-    vlTotal: 0.0,
-    descrTipo: "",
-    descrParcela: "",
-    flgUpdateAll: false,
-    flgGerarParcela: false,
-    flgDifFinal: true,
-  };
+  //const slateGridColors = [theme.colors.slate11, theme.colors.slate1];
 
   const tpsLancto = [
     { key: "S", value: "Semanal" },
@@ -90,9 +62,9 @@ export default function Lancto() {
   const [isFirst, setIsFirst] = useState(true);
 
   const [lanctos, setLanctos] = useState([]);
-  const [lancto, setLancto] = useState({ ...modeloLancto });
+  const [lancto, setLancto] = useState(LanctoObj());
   const [contas, setContas] = useState([]);
-  const [criterio, setCriterio] = useState("a");
+  const [criterio, setCriterio] = useState("4");
 
   // Popup mensagens
   const [messageShow, setMessageShow] = useState(false);
@@ -113,7 +85,7 @@ export default function Lancto() {
   const [filtraConta, setFiltraConta] = useState(false);
   const [tipoVencto, setTipoVencto] = useState("0");
 
-  const errPopup = function (msg) {
+  const erroPopup = function (msg) {
     setTitulo("Erro");
     setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
@@ -163,10 +135,10 @@ export default function Lancto() {
   };
 
   const getAllContas = async () => {
-    const response = await servicoConta.getAll("D");
+    const response = await contaService.getAll("D");
 
     if (response.data.msg) {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
@@ -195,11 +167,10 @@ export default function Lancto() {
   };
 
   const getAll = async () => {
-    const response = await servicoLancto.getAll(criterio);
-    setIsLoading(false);
+    const response = await lanctoService.getAll(criterio);
 
     if (response.data.msg) {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       setLanctos([]);
       return;
     }
@@ -226,6 +197,7 @@ export default function Lancto() {
     }
 
     setLanctos(response.data);
+    setIsLoading(false);
   };
 
   const handleTipoVencto = (event) => {
@@ -300,7 +272,7 @@ export default function Lancto() {
 
   const handleCreate = async function () {
     document.activeElement.blur();
-    setLancto({ ...modeloLancto });
+    setLancto(LanctoObj());
     setStatus("create");
     setTituloCRUD("Inclusão");
     setLenDescricao(0);
@@ -379,7 +351,7 @@ export default function Lancto() {
     setModalCRUDShow(false);
     setModalDeleteShow(false);
     setModalBaixarShow(false);
-    setLancto({ ...modeloLancto });
+    setLancto(LanctoObj());
     setStatus("list");
   };
 
@@ -418,19 +390,19 @@ export default function Lancto() {
 
   const doCreate = async function () {
     if (!lancto.dtVencto) {
-      errPopup("Favor informar a data de vencimento");
+      erroPopup("Favor informar a data de vencimento");
       return;
     }
 
     if (!lancto.idConta) {
-      errPopup("Favor informar a conta");
+      erroPopup("Favor informar a conta");
       return;
     }
 
-    const response = await servicoLancto.create(lancto);
+    const response = await lanctoService.create(lancto);
 
     if (response.data.msg && response.data.msg !== "ok") {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
@@ -440,22 +412,23 @@ export default function Lancto() {
   };
 
   const doUpdate = async function () {
-    const response = await servicoLancto.update(lancto);
+    const response = await lanctoService.update(lancto);
 
     if (response.data.msg && response.data.msg !== "ok") {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
+    setStatus("list");
     setModalCRUDShow(false);
     setRefresh(!refresh);
   };
 
   const doPayment = async function () {
-    const response = await servicoLancto.payment(lancto);
+    const response = await lanctoService.payment(lancto);
 
     if (response.data.msg && response.data.msg !== "ok") {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
@@ -465,10 +438,10 @@ export default function Lancto() {
   };
 
   const doReopen = async function () {
-    const response = await servicoLancto.reopen(lancto);
+    const response = await lanctoService.reopen(lancto);
 
     if (response.data.msg && response.data.msg !== "ok") {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
@@ -477,20 +450,20 @@ export default function Lancto() {
   };
 
   const doDelete = async function () {
-    setStatus("list");
     setModalDeleteShow(false);
 
-    const response = await servicoLancto.remove(
+    const response = await lanctoService.remove(
       lancto.id,
       lancto.parcela,
       lancto.tpExclusao
     );
 
     if (response.data.msg && response.data.msg !== "ok") {
-      errPopup(response.data.msg);
+      erroPopup(response.data.msg);
       return;
     }
 
+    setStatus("list");
     setRefresh(!refresh);
   };
 
@@ -1101,27 +1074,28 @@ export default function Lancto() {
           </div>
         </Row>
 
-        <Row></Row>
         {status == "edit" && lancto.parcelas > 1 && (
-          <div className="col-7">
-            <div className="form-group">
-              <div className="form-control">
-                <input
-                  type="checkbox"
-                  name="flgUpdateAll"
-                  id="flgUpdateAll"
-                  checked={lancto.flgUpdateAll}
-                  onChange={handleInputChange}
-                />
-                <label
-                  htmlFor="flgUpdateAll"
-                  className={`control-label ${styles.spanTipos}`}
-                >
-                  Atualizar todos os lançamentos com esta descrição
-                </label>
+          <Row>
+            <div className="col-7">
+              <div className="form-group">
+                <div className="form-control">
+                  <input
+                    type="checkbox"
+                    name="flgUpdateAll"
+                    id="flgUpdateAll"
+                    checked={lancto.flgUpdateAll}
+                    onChange={handleInputChange}
+                  />
+                  <label
+                    htmlFor="flgUpdateAll"
+                    className={`control-label ${styles.spanTipos}`}
+                  >
+                    Atualizar todos os lançamentos com esta descrição
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
+          </Row>
         )}
       </CenteredModal>
 

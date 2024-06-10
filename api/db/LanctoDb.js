@@ -1,4 +1,4 @@
-import db from './db.js';
+import db from "./db.js";
 import { strDateUS } from "../functions/utils.js";
 
 export async function insert(lancto) {
@@ -158,34 +158,69 @@ function mapLancto(lancto) {
   };
 }
 
-export async function getAll() {
+export async function getAll(crit) {
   try {
-    var sql = selectSQL
-      .replace("{t}", "2 AS `Status`, 'A vencer'")
-      .replace(
-        "l.`Id`=?",
-        "li.`FlPago`=0 AND li.`DtVencto`>DATE(CURRENT_TIMESTAMP)\nUNION\n"
-      );
+    if (typeof crit !== "string") {
+      crit = "4";
+    } else {
+      crit = crit.toUpperCase();
+    }
 
-    sql += selectSQL
-      .replace("{t}", "1 AS `Status`, 'Vencendo'")
-      .replace(
-        "l.`Id`=?",
-        "li.`FlPago`=0 AND li.`DtVencto`=DATE(CURRENT_TIMESTAMP)\nUNION\n"
-      );
+    var sql = "";
 
-    sql += selectSQL
-      .replace("{t}", "0 AS `Status`, 'Vencido'")
-      .replace(
-        "l.`Id`=?",
-        "li.`FlPago`=0 AND li.`DtVencto`<DATE(CURRENT_TIMESTAMP)\nUNION\n"
-      );
+    // Lançamentos de crédito
+    if (crit === "C") {
+      sql = selectSQL
+        .replace("{t}", "0 AS `Status`, 'Crédito'")
+        .replace("l.`Id`=?", "l.`Parcelas`=0");
+    } else {
+      if (crit === "4" || crit === "2") {
+        sql = selectSQL
+          .replace("{t}", "2 AS `Status`, 'A vencer'")
+          .replace(
+            "l.`Id`=?",
+            "l.`Parcelas`>0 AND li.`FlPago`=0 AND li.`DtVencto`>DATE(CURRENT_TIMESTAMP)"
+          );
+      }
 
-    sql += selectSQL
-      .replace("{t}", "3 AS `Status`, 'Pago'")
-      .replace("l.`Id`=?", "li.`FlPago`=1\n");
+      if (crit === "4" || crit === "1") {
+        if (crit === "4") {
+          sql += "\nUNION\n";
+        }
 
-    sql += "ORDER BY `Status`, `DtVencto`, `Tipo`, `Descricao`";
+        sql += selectSQL
+          .replace("{t}", "1 AS `Status`, 'Vencendo'")
+          .replace(
+            "l.`Id`=?",
+            "l.`Parcelas`>0 AND li.`FlPago`=0 AND li.`DtVencto`=DATE(CURRENT_TIMESTAMP)"
+          );
+      }
+
+      if (crit === "4" || crit === "0") {
+        if (crit === "4") {
+          sql += "\nUNION\n";
+        }
+
+        sql += selectSQL
+          .replace("{t}", "0 AS `Status`, 'Vencido'")
+          .replace(
+            "l.`Id`=?",
+            "l.`Parcelas`>0 AND li.`FlPago`=0 AND li.`DtVencto`<DATE(CURRENT_TIMESTAMP)"
+          );
+      }
+
+      if (crit === "4" || crit === "3") {
+        if (crit === "4") {
+          sql += "\nUNION\n";
+        }
+
+        sql += selectSQL
+          .replace("{t}", "3 AS `Status`, 'Pago'")
+          .replace("l.`Id`=?", "l.`Parcelas`>0 AND li.`FlPago`=1");
+      }
+    }
+
+    sql += "\nORDER BY `Status`, `DtVencto`, `Tipo`, `Descricao`";
 
     const pars = [];
     const [results, _] = await db.query(sql, pars);

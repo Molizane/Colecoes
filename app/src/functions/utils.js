@@ -74,6 +74,12 @@ export function strValue(vl) {
     return "0,00";
   }
 
+  if (typeof vl === "string") {
+    try {
+      vl = parseFloat(vl);
+    } catch {}
+  }
+
   return vl.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -81,8 +87,6 @@ export function strValue(vl) {
 }
 
 export function strValue2(vl) {
-  console.log(typeof vl);
-
   if (!(vl == null || vl == undefined)) {
     if (typeof vl == "string") {
       vl = parseFloat(vl);
