@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
-import tipoContaService from "../../services/TipoContaService";
-import contaService from "../../services/ContaService";
-import lanctoService from "../../services/LanctoService";
-import styles from "./styles.module.scss";
-import Card from "../../components/Card";
-import CenteredModal from "../../components/CenteredModal";
-import { FiPlus } from "react-icons/fi";
-import { strDate, strValue, themeColors } from "../../functions/utils";
-import LanctoObj from "../../classes/LanctoObj";
-import { Row } from "react-bootstrap";
-import { FaArrowsRotate } from "react-icons/fa6";
-import { AiFillEdit, AiFillEye } from "react-icons/ai";
-import { BsFillTrash3Fill } from "react-icons/bs";
+import { useEffect, useState } from 'react';
+import { Row } from 'react-bootstrap';
+import { FiPlus } from 'react-icons/fi';
+import { FaArrowsRotate } from 'react-icons/fa6';
+import { AiFillEdit, AiFillEye } from 'react-icons/ai';
+import { BsFillTrash3Fill } from 'react-icons/bs';
+
+import styles from './styles.module.scss';
+
+import { strDate, strValue, themeColors } from '../../functions/utils';
+import CenteredModal from '../../components/CenteredModal';
+import tipoContaService from '../../services/TipoContaService';
+import contaService from '../../services/ContaService';
+import lanctoService from '../../services/LanctoService';
+import LanctoObj from '../../classes/LanctoObj';
 
 export default function Credito() {
   const theme = themeColors();
@@ -19,68 +20,120 @@ export default function Credito() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [refresh, setRefresh] = useState(false);
-  const [status, setStatus] = useState("list");
+  const [status, setStatus] = useState('list');
 
   const [tiposVencto, setTiposVencto] = useState([]);
   const [contas, setContas] = useState([]);
   const [lanctos, setLanctos] = useState([]);
 
   const [regCRUD, setRegCRUD] = useState(null);
-  const [lancto, setLancto] = useState(null);
+  const [lancto, setLancto] = useState(LanctoObj());
+
+  const [id, setId] = useState(null);
+  const [parcela, setParcela] = useState(null);
 
   // Popup mensagens
   const [messageShow, setMessageShow] = useState(false);
-  const [texto, setTexto] = useState("");
-  const [titulo, setTitulo] = useState("");
-  const [corTitulo, setCorTitulo] = useState("");
+  const [texto, setTexto] = useState('');
+  const [titulo, setTitulo] = useState('');
+  const [corTitulo, setCorTitulo] = useState('');
 
   // Popup CRUD
-  const [tipoCRUD, setTipoCRUD] = useState("");
-  const [modalCRUDShow, setModalCRUDShow] = useState(false);
+  const [tipoCRUD, setTipoCRUD] = useState('');
   const [modalLanctoShow, setModalLanctoShow] = useState(false);
+  const [modalDeleteShow, setModalDeleteShow] = useState(false);
 
   const [lenDescricao, setLenDescricao] = useState(0);
   const [filtrados, setFiltrados] = useState(null);
-  const [filtro, setFiltro] = useState("");
-  const [tipoVencto, setTipoVencto] = useState("0");
+  const [filtro, setFiltro] = useState('');
 
   const erroPopup = function (msg) {
-    setTitulo("Erro");
+    setTitulo('Erro');
     setCorTitulo(theme.colors.tomato11);
     setTexto(msg);
     setMessageShow(true);
   };
 
-  const getAll = async () => {
-    var response = await tipoContaService.getAll("C");
+  async function getTiposVencto() {
+    var response = await tipoContaService.getAll('C');
 
     if (response.data.msg) {
       erroPopup(response.data.msg);
-      return;
+      return 0;
+    }
+
+    console.log('getTiposVencto');
+    console.log(response.data);
+
+    if (response.data.length == 0) {
+      const reg = {
+        id: null,
+        descricao: 'Lançamento de Crédito',
+        ehCredito: true,
+      };
+
+      if (!(await doCreate('T', reg))) {
+        return 0;
+      }
+
+      return await getTiposVencto();
     }
 
     setTiposVencto(response.data);
+    return response.data[0].id;
+  }
 
-    response = await contaService.getAll("C");
+  async function getContas(idTipoConta) {
+    var response = await contaService.getAll('C');
 
     if (response.data.msg) {
-      setTiposVencto([]);
-      setContas([]);
-      erroPopup(response.data.msg);
-      return;
+      erroPopup(idTipoConta);
+      return false;
+    }
+
+    console.log('getContas');
+    console.log(idTipoConta);
+    console.log(response.data);
+
+    if (response.data.length == 0) {
+      const reg = {
+        id: null,
+        descricao: 'Lançamentos de Crédito',
+        idTipoConta: idTipoConta,
+        ehCredito: true,
+      };
+
+      if (!doCreate('C', reg)) {
+        return false;
+      }
+
+      return await getContas(idTipoConta);
     }
 
     setContas(response.data);
+    return true;
+  }
 
-    response = await lanctoService.getAll("C");
+  const getLanctos = async () => {
+    const response = await lanctoService.getAll('C');
 
     if (response.data.msg) {
       erroPopup(response.data.msg);
       setLanctos([]);
-      return;
+    } else {
+      setLanctos(response.data);
+    }
+  };
+
+  const getAll = async () => {
+    var idTipoConta = await getTiposVencto();
+
+    if (idTipoConta) {
+      if (!(await getContas(idTipoConta))) {
+        idTipoConta = 0;
+      }
     }
 
-    setLanctos(response.data);
     setIsLoading(false);
   };
 
@@ -88,43 +141,33 @@ export default function Credito() {
     //console.log('page_load');
     // Título da aba
     // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Manutenção de Crédito`;
-    document.title = "Manutenção de Crédito";
+    document.title = 'Manutenção de Crédito';
+    getAll();
   }, []);
 
   useEffect(() => {
-    //console.log("page_refresh");
-    getAll();
+    //console.log('page_refresh');
+    getLanctos();
   }, [refresh]);
 
   useEffect(() => {
-    filtraLanctos(lanctos, filtro, tipoVencto);
-  }, [lanctos, filtro, tipoVencto]);
+    filtraLanctos(lanctos, filtro);
+  }, [lanctos, filtro]);
 
-  const filtraLanctos = (lanctos, filtro, tipoVencto) => {
-    if (filtro || tipoVencto != "4") {
-      var filtrados =
-        tipoVencto == "4"
-          ? lanctos
-          : lanctos.filter((reg) => reg.status == tipoVencto);
+  const filtraLanctos = (lanctos, filtro) => {
+    if (filtro) {
+      var regs = regs.filter(
+        (reg) =>
+          (
+            reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
+          ).indexOf(filtro.toLowerCase()) !== -1
+      );
 
-      if (filtro) {
-        filtrados = filtrados.filter(
-          (reg) =>
-            (
-              reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
-            ).indexOf(filtro.toLowerCase()) !== -1
-        );
-      }
-
-      setFiltrados(filtrados);
+      setFiltrados(regs);
       return;
     }
 
     setFiltrados(lanctos);
-  };
-
-  const handleTipoVencto = (event) => {
-    setTipoVencto(event.target.value);
   };
 
   const handleFilterChange = (event) => {
@@ -134,211 +177,154 @@ export default function Credito() {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
+    setLancto({ ...lancto, [name]: value });
 
-    if (tipoCRUD === "T" || tipoCRUD === "C") {
-      setRegCRUD({ ...regCRUD, [name]: value });
-    } else {
-      setLancto({ ...lancto, [name]: value });
-    }
-
-    if (name == "descricao") {
+    if (name == 'descricao') {
       setLenDescricao(value.length);
     }
   };
 
-  const handleCreateTipo = async function () {
-    await handleCreate("T");
-  };
-
-  const handleCreateConta = async function () {
-    await handleCreate("C");
-  };
-
-  const handleCreateLancto = async function () {
-    await handleCreate("L");
-  };
-
-  const handleCreate = async function (tipo) {
-    setTipoCRUD(tipo);
-
-    if (tipo === "T") {
-      setRegCRUD({ id: null, descricao: "", ehCredito: true });
-    } else if (tipo === "C") {
-      setRegCRUD({
-        id: null,
-        descricao: "",
-        idTipoConta: tiposVencto[0].id,
-        ehCredito: true,
-      });
-    } else {
-      setLancto({
-        ...LanctoObj(),
-        idConta: contas[0].id,
-        flgDiasUteis: false,
-        parcelas: 0,
-        parcela: 0,
-        flPago: true,
-      });
-    }
-
-    setStatus("create");
+  const handleCreate = async function () {
+    document.activeElement.blur();
+    setTipoCRUD('L');
+    setLancto({
+      ...LanctoObj(),
+      idConta: contas[0].id,
+      flgDiasUteis: false,
+      parcelas: 0,
+      parcela: 0,
+      flPago: true,
+    });
+    setStatus('create');
     setCorTitulo(theme.colors.blue12);
     setLenDescricao(0);
-
-    if (tipo === "T" || tipo === "C") {
-      setTitulo(`Inclusão de ${tipo === "T" ? "Tipo de " : ""}Conta`);
-      setModalCRUDShow(true);
-    } else {
-      setTitulo("Inclusão de Lançamento");
-      setModalLanctoShow(true);
-    }
+    setTitulo('Inclusão de Lançamento');
+    setModalLanctoShow(true);
   };
 
-  const handleEditTipo = async function (id) {
-    await handleEdit("T", id);
-  };
+  const handleEdit = async function (id, parcela) {
+    document.activeElement.blur();
+    setTipoCRUD('L');
 
-  const handleEditConta = async function (id) {
-    await handleEdit("C", id);
-  };
+    document.activeElement.blur();
+    const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    setLancto({ ...reg, flgUpdateAll: false });
 
-  const handleEditLancto = async function (id) {
-    await handleEdit("L", id);
-  };
-
-  const handleEdit = async function (tipo, id) {
-    setTipoCRUD(tipo);
-
-    var reg;
-
-    if (tipo === "T") {
-      reg = { ...tiposVencto[0] };
-      setRegCRUD(reg);
-    } else if (tipo === "C") {
-      reg = { ...contas[0] };
-      setRegCRUD(reg);
-    } else {
-      setTipoCRUD("");
-      return;
-    }
-
-    setStatus("edit");
-
-    if (tipo === "T" || tipo === "C") {
-      setTitulo(`Alteração de ${tipo === "T" ? "Tipo de " : ""}Conta`);
-    } else {
-      setTitulo("Alteração de Lançamento");
-    }
+    setStatus('edit');
+    setTitulo('Alteração de Lançamento');
 
     setCorTitulo(theme.colors.blue12);
     setLenDescricao(reg.descricao.length);
-    setModalCRUDShow(true);
+    setModalLanctoShow(true);
   };
 
-  const handleDelete = async function (id) {
+  const handleDelete = async function (id, parcela) {
+    document.activeElement.blur();
     setId(id);
-    setStatus("delete");
-    setTitulo("Atenção!");
+    setParcela(parcela);
+    const reg = lanctos.find((r) => r.id == id && r.parcela == parcela);
+    setLancto({ ...reg });
+    setStatus('delete');
+    setTitulo('Atenção!');
     setCorTitulo(theme.colors.tomato11);
-    setModalCRUDShow(true);
+    setModalDeleteShow(true);
   };
 
   const doPopupAction = async function () {
-    if (status === "delete") {
-      await doDelete();
+    if (status === 'create') {
+      await doCreate('L');
       return;
     }
 
-    if (status === "create") {
-      await doCreate();
-      return;
-    }
-
-    if (status === "edit") {
+    if (status === 'edit') {
       await doUpdate();
+      return;
+    }
+
+    if (status === 'delete') {
+      await doDelete();
       return;
     }
   };
 
   const handleCancel = async function () {
-    setModalCRUDShow(false);
+    setModalDeleteShow(false);
     setRegCRUD(null);
-    setTipoCRUD("");
-    setStatus("list");
+    setTipoCRUD('');
+    setStatus('list');
   };
 
-  const doCreate = async function () {
+  const doCreate = async function (tipoCRUD, reg) {
     var response;
 
-    if (tipoCRUD == "T") {
-      response = await tipoContaService.create(regCRUD);
-    } else if (tipoCRUD == "C") {
-      response = await contaService.create(regCRUD);
+    if (tipoCRUD == 'T') {
+      response = await tipoContaService.create(reg);
+    } else if (tipoCRUD == 'C') {
+      response = await contaService.create(reg);
     } else {
       response = await lanctoService.create(lancto);
     }
 
-    if (response.data.msg && response.data.msg !== "ok") {
+    if (response.data.msg && response.data.msg !== 'ok') {
       erroPopup(response.data.msg);
-      return;
+      return false;
     }
 
-    setTipoCRUD("");
-    setStatus("list");
-    setModalCRUDShow(false);
-    setRefresh(!refresh);
+    if (tipoCRUD === 'L') {
+      setTipoCRUD('');
+      setStatus('list');
+      setModalLanctoShow(false);
+      setRefresh(!refresh);
+    }
+
+    return true;
   };
 
   const doUpdate = async function () {
     var response;
 
-    if (tipoCRUD == "T") {
+    if (tipoCRUD == 'T') {
       response = await tipoContaService.update(regCRUD);
-    } else if (tipoCRUD == "C") {
+    } else if (tipoCRUD == 'C') {
       response = await contaService.update(regCRUD);
     } else {
       response = await lanctoService.update(lancto);
     }
 
-    if (response.data.msg && response.data.msg !== "ok") {
+    if (response.data.msg && response.data.msg !== 'ok') {
       erroPopup(response.data.msg);
       return;
     }
 
-    setTipoCRUD("");
-    setStatus("list");
-    setModalCRUDShow(false);
+    setTipoCRUD('');
+    setStatus('list');
+    setModalLanctoShow(false);
     setRefresh(!refresh);
   };
 
   const doDelete = async function () {
-    setModalCRUDShow(false);
-    const response = await lanctoService.remove(id);
+    setModalLanctoShow(false);
+    const response = await lanctoService.remove(id, parcela, 'U');
 
-    if (response.data.msg && response.data.msg !== "ok") {
+    if (response.data.msg && response.data.msg !== 'ok') {
       erroPopup(response.data.msg);
       return;
     }
 
-    setTipoCRUD("");
-    setStatus("list");
+    setTipoCRUD('');
+    setStatus('list');
+    setModalDeleteShow(false);
     setRefresh(!refresh);
-  };
-
-  const handleFiltroContas = function (e) {
-    setFiltraConta(e.target.checked);
   };
 
   const doRefresh = function () {
     setRefresh(!refresh);
   };
 
-  const descrColLen = `col-6`;
-
   return (
     <div className={styles.container}>
-      <Row className="m-0">
-        <div className="col-12">
+      <Row className='m-0'>
+        <div className='col-12'>
           <div className={styles.titulo}>
             <div className={styles.titulo2}>
               <h4>Manutenção de Crédito</h4>
@@ -348,245 +334,141 @@ export default function Credito() {
         </div>
       </Row>
 
-      <Row className="m-0">
-        <div className="col-12">
-          <div className={styles.titulo}>
-            <div className={styles.titulo2}>
-              <h5>Tipo de Lançamento</h5>
-              {!isLoading && tiposVencto.length === 0 && (
-                <button className="btn-insert" onClick={handleCreateTipo}>
-                  <FiPlus />
-                  Novo
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </Row>
-
-      {!isLoading && tiposVencto.length > 0 && (
+      {!isLoading && tiposVencto.length > 0 && contas.length > 0 && (
         <>
-          <Row className="m-0">
-            <div className="col-12">
-              <div className="row-cols-md-5 m-0">
-                {tiposVencto.map((regCRUD) => (
-                  <div key={`regCRUD${regCRUD.id}`} className="p-2">
-                    <Card
-                      id={regCRUD.id}
-                      qtde={0}
-                      linha2={regCRUD.descricao}
-                      color={theme.colors.gray1}
-                      bgColor={theme.colors.gray11}
-                      delColor={theme.colors.gray1}
-                      bgDelColor={theme.colors.tomato11}
-                      editColor={theme.colors.gray1}
-                      bgEditColor={theme.colors.green11}
-                      onEdit={handleEditTipo}
-                    />
-                  </div>
-                ))}
-              </div>
-              <hr />
-            </div>
-          </Row>
-
-          <Row className="m-0">
-            <div className="col-12">
+          <Row className='m-0'>
+            <div className='col-12'>
               <div className={styles.titulo}>
                 <div className={styles.titulo2}>
-                  <h5>Conta</h5>
-                  {contas.length === 0 && (
-                    <button className="btn-insert" onClick={handleCreateConta}>
-                      <FiPlus />
-                      Novo
-                    </button>
-                  )}
+                  <h5>Lançamentos de Crédito</h5>
+                  <button className='btn-insert' onClick={handleCreate}>
+                    <FiPlus />
+                    Novo
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div>
+                    <input
+                      type='search'
+                      className={styles.search}
+                      placeholder='Filtro..'
+                      name='filtro'
+                      maxLength={45}
+                      value={filtro}
+                      onChange={handleFilterChange}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </Row>
 
-          {contas.length === 0 && (
-            <Row className="m-0">
-              <div className="col-12">
-                <hr />
+          <div style={{ marginLeft: '50px', marginRight: '68px' }}>
+            <Row
+              style={{
+                marginLeft: '1px',
+                marginRight: '1px',
+                fontWeight: 'bold',
+              }}
+            >
+              <div className='col-6'>Descrição</div>
+              <div className='col-2'>Data</div>
+              <div className={`col-2 ${styles.vlLancto}`}>Valor</div>
+              <div className={`col-2 ${styles.refresh} `}>
+                <button
+                  type='button'
+                  className='btn-refresh'
+                  onClick={doRefresh}
+                  data-tooltip-id='atualizarTip'
+                  data-tooltip-content='Atualizar'
+                  data-tooltip-place='top'
+                >
+                  <FaArrowsRotate />
+                </button>
               </div>
             </Row>
-          )}
 
-          {contas.length > 0 && (
-            <>
-              <Row className="m-0">
-                <div className="col-12">
-                  <Row className="row-cols-md-5 m-0">
-                    {contas.map((regCRUD) => (
-                      <div
-                        key={`${regCRUD}regCRUD${regCRUD.id}`}
-                        className="p-2"
-                      >
-                        <Card
-                          id={regCRUD.id}
-                          qtde={0}
-                          titulo1="Tipo"
-                          linha1={`${regCRUD.tipoConta}`}
-                          linha2={regCRUD.descricao}
-                          color={theme.colors.gray1}
-                          bgColor={theme.colors.gray11}
-                          delColor={theme.colors.gray1}
-                          bgDelColor={theme.colors.tomato11}
-                          editColor={theme.colors.gray1}
-                          bgEditColor={theme.colors.green11}
-                          onEdit={handleEditConta}
-                        />
+            <Row>
+              <div className='col-12'>
+                <hr style={{ marginTop: '1px', marginBottom: '2px' }} />
+              </div>
+            </Row>
+          </div>
+
+          <div
+            style={{
+              height: '39vh',
+              overflowY: 'scroll',
+              overflowX: 'hidden',
+              marginLeft: '50px',
+              marginRight: '50px',
+            }}
+          >
+            {!isLoading &&
+              filtrados.length > 0 &&
+              filtrados.map((lancto, index) => {
+                var style = {
+                  ...style,
+                  backgroundColor: greenGridColors[index % 2],
+                  color: theme.colors.slate11,
+                  fontWeight: 'bold',
+                };
+
+                return (
+                  <Row className='m-0' style={style} key={`lancto${lancto.id}`}>
+                    <div className='col-6'>{lancto.descricao}</div>
+                    <div className='col-2'>{strDate(lancto.dtVencto)}</div>
+                    <div className={`col-2 ${styles.vlLancto}`}>
+                      {strValue(lancto.vlTotal)}
+                    </div>
+                    <div className={`col-2 ${styles.funcoes}`}>
+                      <div className={styles.refresh}>
+                        <button
+                          className='btn-refresh'
+                          onClick={() => {
+                            handleView(lancto.id, lancto.parcela);
+                          }}
+                        >
+                          <AiFillEye
+                            className='btn-refresh'
+                            data-tooltip-id='atualizarTip'
+                            data-tooltip-content='Visualizar'
+                            data-tooltip-place='top'
+                          />
+                        </button>
+                        <button
+                          className='btn-refresh'
+                          onClick={() => {
+                            handleEdit(lancto.id, lancto.parcela);
+                          }}
+                        >
+                          <AiFillEdit
+                            className='btn-refresh'
+                            data-tooltip-id='atualizarTip'
+                            data-tooltip-content='Editar'
+                            data-tooltip-place='top'
+                          />
+                        </button>
+                        <button
+                          className='btn-refresh'
+                          onClick={() => {
+                            handleDelete(lancto.id, lancto.parcela);
+                          }}
+                        >
+                          <BsFillTrash3Fill
+                            className='btn-refresh'
+                            data-tooltip-id='atualizarTip'
+                            data-tooltip-content='Excluir'
+                            data-tooltip-place='top'
+                          />
+                        </button>
                       </div>
-                    ))}
+                    </div>
                   </Row>
-                  <hr />
-                </div>
-              </Row>
-
-              <Row className="m-0">
-                <div className="col-12">
-                  <div className={styles.titulo}>
-                    <div className={styles.titulo2}>
-                      <h5>Lançamentos de Crédito</h5>
-                      <button
-                        className="btn-insert"
-                        onClick={handleCreateLancto}
-                      >
-                        <FiPlus />
-                        Novo
-                      </button>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center" }}>
-                      <div>
-                        <input
-                          type="search"
-                          className={styles.search}
-                          placeholder="Filtro.."
-                          name="filtro"
-                          maxLength={45}
-                          value={filtro}
-                          onChange={handleFilterChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Row>
-
-              <div style={{ marginLeft: "50px", marginRight: "68px" }}>
-                <Row
-                  style={{
-                    marginLeft: "1px",
-                    marginRight: "1px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  <div className="col-6">Descrição</div>
-                  <div className="col-2">Data</div>
-                  <div className={`col-2 ${styles.vlLancto}`}>Valor</div>
-                  <div className={`col-2 ${styles.refresh} `}>
-                    <button
-                      type="button"
-                      className="btn-refresh"
-                      onClick={doRefresh}
-                      data-tooltip-id="atualizarTip"
-                      data-tooltip-content="Atualizar"
-                      data-tooltip-place="top"
-                    >
-                      <FaArrowsRotate />
-                    </button>
-                  </div>
-                </Row>
-
-                <Row>
-                  <div className="col-12">
-                    <hr style={{ marginTop: "1px", marginBottom: "2px" }} />
-                  </div>
-                </Row>
-              </div>
-
-              <div
-                style={{
-                  height: "39vh",
-                  overflowY: "scroll",
-                  overflowX: "hidden",
-                  marginLeft: "50px",
-                  marginRight: "50px",
-                }}
-              >
-                {!isLoading &&
-                  filtrados.length > 0 &&
-                  filtrados.map((lancto, index) => {
-                    var style = {
-                      ...style,
-                      backgroundColor: greenGridColors[index % 2],
-                      color: theme.colors.slate11,
-                      fontWeight: "bold",
-                    };
-
-                    return (
-                      <Row
-                        className="m-0"
-                        style={style}
-                        key={`lancto${lancto.id}`}
-                      >
-                        <div className={descrColLen}>{lancto.descricao}</div>
-                        <div className="col-2">{strDate(lancto.dtVencto)}</div>
-                        <div className={`col-2 ${styles.vlLancto}`}>
-                          {strValue(lancto.vlTotal)}
-                        </div>
-                        <div className={`col-2 ${styles.funcoes}`}>
-                          <div className={styles.refresh}>
-                            <button
-                              className="btn-refresh"
-                              onClick={() => {
-                                handleView(lancto.id, lancto.parcela);
-                              }}
-                            >
-                              <AiFillEye
-                                className="btn-refresh"
-                                data-tooltip-id="atualizarTip"
-                                data-tooltip-content="Visualizar"
-                                data-tooltip-place="top"
-                              />
-                            </button>
-                            <button
-                              className="btn-refresh"
-                              onClick={() => {
-                                handleEdit(lancto.id, lancto.parcela);
-                              }}
-                            >
-                              <AiFillEdit
-                                className="btn-refresh"
-                                data-tooltip-id="atualizarTip"
-                                data-tooltip-content="Editar"
-                                data-tooltip-place="top"
-                              />
-                            </button>
-                            <button
-                              className="btn-refresh"
-                              onClick={() => {
-                                handleDelete(lancto.id, lancto.parcela);
-                              }}
-                            >
-                              <BsFillTrash3Fill
-                                className="btn-refresh"
-                                data-tooltip-id="atualizarTip"
-                                data-tooltip-content="Excluir"
-                                data-tooltip-place="top"
-                              />
-                            </button>
-                          </div>
-                        </div>
-                      </Row>
-                    );
-                  })}
-              </div>
-            </>
-          )}
+                );
+              })}
+          </div>
         </>
       )}
 
@@ -602,52 +484,10 @@ export default function Credito() {
         onHide={() => setMessageShow(false)}
       />
 
-      {/* Popup CRUD */}
-      {(tipoCRUD === "T" || tipoCRUD === "C") && (
-        <CenteredModal
-          backdrop="static"
-          titulo={titulo}
-          corTitulo={corTitulo}
-          corConteudo={theme.colors.gray1}
-          closeButton={false}
-          thumbsUp={status === "delete"}
-          thumbsDown={status === "delete"}
-          floppy={status !== "delete"}
-          cancel={status !== "delete"}
-          show={modalCRUDShow}
-          onConfirm={() => doPopupAction()}
-          onHide={() => handleCancel()}
-        >
-          {(status === "create" || status === "edit") && (
-            <>
-              <div className="form-group">
-                <label htmlFor="descricao" className="control-label">
-                  Descrição
-                </label>
-                <input
-                  name="descricao"
-                  id="descricao"
-                  type="text"
-                  className="form-control"
-                  required
-                  value={regCRUD.descricao}
-                  onChange={handleInputChange}
-                  maxLength={45}
-                  autoFocus
-                />
-                <div className="div-contador">
-                  <span className="contador">{lenDescricao}</span>
-                </div>
-              </div>
-            </>
-          )}
-        </CenteredModal>
-      )}
-
       {/* Popup lançamento */}
-      {tipoCRUD === "L" && (
+      {tipoCRUD === 'L' && (
         <CenteredModal
-          backdrop="static"
+          backdrop='static'
           titulo={titulo}
           corTitulo={corTitulo}
           corConteudo={theme.colors.gray1}
@@ -660,69 +500,142 @@ export default function Credito() {
           onConfirm={() => doPopupAction()}
           onHide={() => handleCancel()}
         >
-          <Row>
-            <div className="col-6">
-              <div className="form-group">
-                <label htmlFor="dtVencto" className="control-label">
-                  Data
-                </label>
-                <input
-                  className="form-control"
-                  name="dtVencto"
-                  id="dtVencto"
-                  type="date"
-                  required
-                  autoFocus
-                  value={lancto.dtVencto.substring(0, 10)}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="col-6">
-              <div className="form-group">
-                <label htmlFor="vlLancto" className="control-label">
-                  Valor
-                </label>
-                <input
-                  className="form-control"
-                  name="vlLancto"
-                  id="vlLancto"
-                  type="number"
-                  required
-                  min={0}
-                  step={0.01}
-                  pattern="([0-9]{1,3}).([0-9]{1,3})"
-                  value={lancto.vlLancto}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-          </Row>
-
-          <Row>
-            <div className="col-12">
-              <div className="form-group">
-                <label htmlFor="descricao" className="control-label">
-                  Descrição
-                </label>
-                <input
-                  className="form-control"
-                  name="descricao"
-                  id="descricao"
-                  type="text"
-                  required
-                  value={lancto.descricao}
-                  onChange={handleInputChange}
-                  maxLength={100}
-                />
-                <div className="div-contador">
-                  <span className="contador">{lenDescricao}</span>
+          <form>
+            <Row>
+              <div className='col-6'>
+                <div className='form-group'>
+                  <label htmlFor='dtVencto' className='control-label'>
+                    Data
+                  </label>
+                  <input
+                    className='form-control'
+                    name='dtVencto'
+                    id='dtVencto'
+                    type='date'
+                    required
+                    autoFocus
+                    value={lancto.dtVencto.substring(0, 10)}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
-            </div>
-          </Row>
+              <div className='col-6'>
+                <div className='form-group'>
+                  <label htmlFor='vlLancto' className='control-label'>
+                    Valor
+                  </label>
+                  <input
+                    className='form-control'
+                    name='vlLancto'
+                    id='vlLancto'
+                    type='number'
+                    min={0}
+                    step={0.01}
+                    pattern='([0-9]{1,3}).([0-9]{1,3})'
+                    required
+                    value={lancto.vlLancto}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </Row>
+
+            <Row>
+              <div className='col-12'>
+                <div className='form-group'>
+                  <label htmlFor='descricao' className='control-label'>
+                    Descrição
+                  </label>
+                  <input
+                    className='form-control'
+                    name='descricao'
+                    id='descricao'
+                    type='text'
+                    value={lancto.descricao}
+                    onChange={handleInputChange}
+                    maxLength={100}
+                  />
+                  <div className='div-contador'>
+                    <span className='contador'>{lenDescricao}</span>
+                  </div>
+                </div>
+              </div>
+            </Row>
+          </form>
         </CenteredModal>
       )}
+
+      {/* Excluir/Estornar */}
+      <CenteredModal
+        backdrop='static'
+        titulo='Atenção!'
+        corTitulo={theme.colors.tomato11}
+        corConteudo={theme.colors.gray11}
+        closeButton={false}
+        thumbsUp={true}
+        thumbsDown={true}
+        floppy={false}
+        cancel={false}
+        show={modalDeleteShow}
+        onConfirm={() => doPopupAction()}
+        onHide={() => handleCancel()}
+      >
+        <Row>
+          <div className='col-12 mb-2'>
+            <h5>Confirme a EXCLUSÃO...</h5>
+          </div>
+          <div className='col-6'>
+            <div className='form-group'>
+              <label htmlFor='dtVencto' className='control-label'>
+                Data
+              </label>
+              <input
+                className='form-control'
+                name='dtVencto'
+                id='dtVencto'
+                type='date'
+                disabled={true}
+                value={lancto.dtVencto.substring(0, 10)}
+              />
+            </div>
+          </div>
+          <div className='col-6'>
+            <div className='form-group'>
+              <label htmlFor='vlLancto' className='control-label'>
+                Valor
+              </label>
+              <input
+                className='form-control'
+                name='vlLancto'
+                id='vlLancto'
+                type='number'
+                min={0}
+                step={0.01}
+                pattern='([0-9]{1,3}).([0-9]{1,3})'
+                disabled={true}
+                value={lancto.vlLancto}
+              />
+            </div>
+          </div>
+          <div className='col-12'>
+            <div className='form-group'>
+              <label htmlFor='descricao' className='control-label'>
+                Descrição
+              </label>
+              <input
+                className='form-control'
+                name='descricao'
+                id='descricao'
+                type='text'
+                disabled
+                value={lancto.descricao}
+                onChange={handleInputChange}
+                maxLength={100}
+              />
+            </div>
+          </div>
+        </Row>
+      </CenteredModal>
     </div>
   );
 }

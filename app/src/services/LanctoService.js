@@ -57,6 +57,17 @@ const get = async (id) => {
   }
 };
 
+const getSaldos = async (dtInicio, dtFim) => {
+  try {
+    console.log("dtInicio", dtInicio);
+    console.log("dtFim", dtFim);
+
+    return await http.get(`/lancto/saldos/${dtInicio}/${dtFim}`);
+  } catch (ex) {
+    return trataErrosApi(ex);
+  }
+};
+
 const exportedObject = { create, update, payment, reopen, remove, getAll, get };
 
 export default exportedObject;

@@ -47,7 +47,7 @@ export default function Conta() {
   };
 
   const getAllTipos = async () => {
-    const response = await servicoTipo.getAll();
+    const response = await servicoTipo.getAll("D");
 
     if (response.data.msg) {
       errPopup(response.data.msg);
@@ -69,7 +69,7 @@ export default function Conta() {
   };
 
   const getAll = async () => {
-    const response = await servicoConta.getAll();
+    const response = await servicoConta.getAll("D");
 
     if (response.data.msg) {
       errPopup(response.data.msg);

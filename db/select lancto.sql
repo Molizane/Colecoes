@@ -5,9 +5,7 @@ TRUNCATE TABLE `contas_dev`.`lanctoitens`;
 TRUNCATE TABLE `contas_dev`.`lancto`;
 */
 
-SELECT l.`Id`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,
-       l.`DtLancto`, l.`TpVencto`, l.`FlgDiasUteis`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`,
-       li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`,
+SELECT l.`Id`,
        CASE WHEN l.Parcelas = 0
             THEN 'Crédito'
             ELSE CASE l.`TpVencto`
@@ -21,7 +19,9 @@ SELECT l.`Id`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`
                    WHEN 'A' THEN 'Anual'
                    ELSE l.`TpVencto`
                  END
-       END AS `DescrTipo`
+       END AS `DescrTipo`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,
+       l.`DtLancto`, l.`TpVencto`, l.`FlgDiasUteis`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`,
+       li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
 FROM `contas_dev`.`lancto` l
 INNER JOIN `contas_dev`.`lanctoitens` li
 ON li.`IdLancto` = l.`Id`

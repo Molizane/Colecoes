@@ -9,7 +9,7 @@ import {
   getByIdPai,
   getByIdParcela,
   getByIdTipoConta,
-  getByIdLote,
+  getSaldos,
 } from "../db/LanctoDb.js";
 
 const router = express.Router();
@@ -138,15 +138,9 @@ router.get("/pai/:id?", async (req, res, next) => {
   }
 });
 
-router.get("/lote/:id?", async (req, res, next) => {
+router.get("/saldos/:dtInicio/:dtFim", async (req, res, next) => {
   try {
-    if (!isNaN(req.params.id)) {
-      logger.info(`GET /lancto/lote/${req.params.id}`);
-    } else {
-      logger.info(`GET /lancto/lote`);
-    }
-
-    const result = await getByIdLote(req.params.id);
+    const result = await getSaldos(req.params.dtInicio, req.params.dtFim);
 
     if (result.status) {
       res.status(500).send(result);

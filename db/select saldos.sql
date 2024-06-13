@@ -8,7 +8,7 @@ WHERE li.`FlPago` = 0
 GROUP BY li.`DtVencto`
 ORDER BY li.`DtVencto`;
 
-SELECT 'Pago' AS Tipo, li.`DtPagto` AS Data, -SUM(li.`VlTotal`) AS Lanctos, ef.`Valor` AS Saldo
+SELECT 'Pago' AS Tipo, li.`DtPagto` AS Data, SUM(li.`VlTotal` * CASE li.Parcela WHEN 0 THEN 1 ELSE -1 END) AS Lanctos, ef.`Valor` AS Saldo
 FROM `lancto` l
 INNER JOIN `lanctoitens` li
 ON li.`IdLancto` = l.`Id`

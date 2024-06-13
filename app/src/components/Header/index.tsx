@@ -14,13 +14,16 @@ export function Header() {
         </div>
         <nav className={styles.fill}>
           <div className={styles.menu}>
+            <div></div>
             <div>
-              {/*
-              <ActiveLink href="/" className={styles.dashboard} activeClassName={styles.activeDashboard}>
+              <ActiveLink
+                href="/"
+                className={styles.dashboard}
+                activeClassName={styles.activeDashboard}
+              >
                 <a>Painel de Movimentação</a>
-              </ActiveLink> */}
-            </div>
-            <div>
+              </ActiveLink>
+
               <ActiveLink href="/tipoconta" activeClassName={styles.active}>
                 <a>Tipos de Conta</a>
               </ActiveLink>

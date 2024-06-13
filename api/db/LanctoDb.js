@@ -114,6 +114,7 @@ const selectSQL =
   "       l.`tpVencto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
   "       li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,\n" +
   "       li.`VlTotal`,\n" +
+  "       l.`DtLancto`,\n" +
   "       CASE l.`tpVencto`\n" +
   "         WHEN 'S' THEN 'Semanal'\n" +
   "         WHEN 'Q' THEN 'Quinzenal'\n" +
@@ -220,7 +221,7 @@ export async function getAll(crit) {
       }
     }
 
-    sql += "\nORDER BY `Status`, `DtVencto`, `Tipo`, `Descricao`";
+    sql += "\nORDER BY `Status`, `DtVencto`, `DtLancto`, `Tipo`, `Descricao`";
 
     const pars = [];
     const [results, _] = await db.query(sql, pars);
@@ -273,7 +274,7 @@ export async function getAllByCriter(crit) {
         break;
     }
 
-    sql += "ORDER BY li.`DtVencto`, li.`Descricao`";
+    sql += "ORDER BY li.`DtVencto`, l.`DtLancto`, li.`Descricao`";
 
     const [results, _] = await db.query(sql, pars);
 
@@ -375,16 +376,35 @@ export async function getByIdTipoConta(id) {
   }
 }
 
-export async function getByIdLote(id) {
+export async function getSaldos(dtInicio, dtFim) {
   try {
-    const [results, _] = await db.query(
-      "SELECT * FROM `lancto` WHERE `Id`=? ORDER BY `DtVencto`",
-      [id]
+    const [planejado, pl] = await db.query(
+      "SELECT * FROM `planejado` WHERE `Data` BETWEEN ? AND ? ORDER BY `Data`",
+      [dtInicio, dtFim]
     );
 
-    return results.map((result) => {
-      return mapLancto(result);
-    });
+    const [planejados, psl] = await db.query(
+      "SELECT MAX(`Data`) AS MaxData, MIN(`Data`) As MinData FROM `planejado`",
+      [dtInicio, dtFim]
+    );
+
+    const [efetivado, ef] = await db.query(
+      "SELECT * FROM `efetivado` WHERE `Data` BETWEEN ? AND ? ORDER BY `Data`",
+      [dtInicio, dtFim]
+    );
+
+    const [efetivados, efl] = await db.query(
+      "SELECT MAX(`Data`) AS MaxData, MIN(`Data`) As MinData FROM `efetivado`",
+      [dtInicio, dtFim]
+    );
+
+    const saldos = {
+      planejado,
+      planejados: planejados[0],
+      efetivado,
+      efetivados: efetivados[0],
+    };
+    return saldos;
   } catch (err) {
     logger.info(`get /Lancto/Tipo/${id} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };

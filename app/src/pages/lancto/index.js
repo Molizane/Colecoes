@@ -257,19 +257,6 @@ export default function Lancto() {
     }
   };
 
-  const handleToggle = (event) => {
-    var name = event.target.name;
-
-    if (name === "flgDiasUteis") {
-      setLancto({ ...lancto, flgDiasUteis: !lancto.flgDiasUteis });
-      return;
-    }
-
-    if (name === "flgUpdateAll") {
-      setLancto({ ...lancto, flgUpdateAll: !lancto.flgUpdateAll });
-    }
-  };
-
   const handleCreate = async function () {
     document.activeElement.blur();
     setLancto(LanctoObj());
@@ -735,71 +722,6 @@ export default function Lancto() {
         onHide={() => setMessageShow(false)}
       />
 
-      {/* Excluir/Estornar */}
-      <CenteredModal
-        tamanho="lg"
-        backdrop="static"
-        titulo="Atenção!"
-        corTitulo={theme.colors.tomato11}
-        corConteudo={theme.colors.gray11}
-        closeButton={false}
-        thumbsUp={true}
-        thumbsDown={true}
-        floppy={false}
-        cancel={false}
-        show={modalDeleteShow}
-        onConfirm={() => doPopupAction()}
-        onHide={() => handleCancel()}
-      >
-        <Row>
-          <div className="col-12 mb-2">
-            <h5>{tituloExcluir}</h5>
-          </div>
-          <div className="col-12">
-            <div className="form-group">
-              <label htmlFor="descricao" className="control-label">
-                Descrição
-              </label>
-              <input
-                className="form-control"
-                name="descricao"
-                id="descricao"
-                type="text"
-                disabled
-                value={`${lancto.descricao}${lancto.descrParcela}`}
-                onChange={handleInputChange}
-                maxLength={100}
-              />
-            </div>
-          </div>
-          {status == "delete" && lancto.parcelas > 1 && (
-            <div className="col-6">
-              <div className="form-group">
-                <label htmlFor="tpExclusao" className="control-label">
-                  Tipo de EXCLUSÃO
-                </label>
-                <select
-                  name="tpExclusao"
-                  id="tpExclusao"
-                  className="form-control"
-                  value={lancto.tpExclusao}
-                  onChange={handleInputChange}
-                >
-                  {tpsExclusao.map((tpExclusao) => {
-                    const { key, value } = tpExclusao;
-                    return (
-                      <option key={key} value={key}>
-                        {value}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-          )}
-        </Row>
-      </CenteredModal>
-
       {/* Popup Incluir/Alterar */}
       <CenteredModal
         tamanho="lg"
@@ -1097,6 +1019,71 @@ export default function Lancto() {
             </div>
           </Row>
         )}
+      </CenteredModal>
+
+      {/* Excluir/Estornar */}
+      <CenteredModal
+        tamanho="lg"
+        backdrop="static"
+        titulo="Atenção!"
+        corTitulo={theme.colors.tomato11}
+        corConteudo={theme.colors.gray11}
+        closeButton={false}
+        thumbsUp={true}
+        thumbsDown={true}
+        floppy={false}
+        cancel={false}
+        show={modalDeleteShow}
+        onConfirm={() => doPopupAction()}
+        onHide={() => handleCancel()}
+      >
+        <Row>
+          <div className="col-12 mb-2">
+            <h5>{tituloExcluir}</h5>
+          </div>
+          <div className="col-12">
+            <div className="form-group">
+              <label htmlFor="descricao" className="control-label">
+                Descrição
+              </label>
+              <input
+                className="form-control"
+                name="descricao"
+                id="descricao"
+                type="text"
+                disabled
+                value={`${lancto.descricao}${lancto.descrParcela}`}
+                onChange={handleInputChange}
+                maxLength={100}
+              />
+            </div>
+          </div>
+          {status == "delete" && lancto.parcelas > 1 && (
+            <div className="col-6">
+              <div className="form-group">
+                <label htmlFor="tpExclusao" className="control-label">
+                  Tipo de EXCLUSÃO
+                </label>
+                <select
+                  name="tpExclusao"
+                  id="tpExclusao"
+                  className="form-control"
+                  value={lancto.tpExclusao}
+                  onChange={handleInputChange}
+                >
+                  {tpsExclusao.map((tpExclusao) => {
+                    const { key, value } = tpExclusao;
+                    return (
+                      <option key={key} value={key}>
+                        {value}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+          )}
+        </Row>
       </CenteredModal>
 
       {/* Popup Baixar/Visualizar */}

@@ -40,7 +40,7 @@ export default function TipoConta() {
   };
 
   const getAll = async () => {
-    const response = await servico.getAll();
+    const response = await servico.getAll("D");
 
     if (response.data.msg) {
       errPopup(response.data.msg);

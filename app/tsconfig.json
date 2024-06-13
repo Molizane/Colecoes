@@ -15,6 +15,14 @@
     "jsx": "preserve",
     "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/services/TipoContaService.js", "src/pages/tstcard/index.js", "src/pages/tipoconta/index.js"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "src/services/TipoContaService.js",
+    "src/pages/tstcard/index.js",
+    "src/pages/tipoconta/index.js",
+    "src/pages/index.js"
+  ],
   "exclude": ["node_modules"]
 }

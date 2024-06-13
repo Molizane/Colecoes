@@ -4,15 +4,19 @@ import gregorian_pt_br from "react-date-object/locales/gregorian_pt_br";
 import styles from "../styles/Home.module.scss";
 import { Row } from "react-bootstrap";
 
+import lanctoService from "../services/LanctoService";
+
 const Home = () => {
   const [date, setDate] = useState(new Date());
   const [days, setDays] = useState([{ dia: 0, status: "" }]);
+  const [mesAtual, setMesAtual] = useState(new Date().getMonth() + 1);
+  const [anoAtual, setAnoAtual] = useState(new Date().getFullYear());
 
-  const handleDayChanged = (e: any) => {
+  const handleDayChanged = (e) => {
     setDate(e);
   };
 
-  const handleMonthChanged = (e: any) => {
+  const handleMonthChanged = (e) => {
     //setDate(e);
   };
 
@@ -27,7 +31,9 @@ const Home = () => {
     //
   }, [date]);
 
-  const mesAtual = new Date().getMonth();
+  const carregaSaldos = (dtInicio, dtFim) => {
+    //
+  };
 
   return (
     <div className={styles.container}>
@@ -42,6 +48,7 @@ const Home = () => {
         </div>
         <div className="col-4">
           <Calendar
+            onlyMonthPicker={true}
             locale={gregorian_pt_br}
             onChange={handleDayChanged}
             onMonthChange={handleMonthChanged}
