@@ -7,8 +7,9 @@ export async function insert(lancto) {
   }
 
   try {
+    console.log(lancto.flgBaixar);
     const result = await db.query(
-      "set @id=null; call InsertLancto(?,?,?,?,?,?,?,?,?,@id); select @id as id",
+      "set @id=null; call InsertLancto(?,?,?,?,?,?,?,?,?,?,@id); select @id as id",
       [
         lancto.idConta,
         lancto.descricao,
@@ -19,6 +20,7 @@ export async function insert(lancto) {
         lancto.flgDiasUteis,
         lancto.flgGerarParcela,
         lancto.flgDifFinal,
+        lancto.flgBaixar,
       ]
     );
 

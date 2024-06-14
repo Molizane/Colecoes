@@ -52,7 +52,7 @@ CREATE TABLE `conta` (
   UNIQUE KEY `ui_conta_nm` (`Id`,`IdTipoConta`,`Descricao`),
   KEY `idx_conta_tipoconta` (`IdTipoConta`) /*!80000 INVISIBLE */,
   KEY `idx_conta_Id_IdTipoConta` (`IdTipoConta`,`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -133,7 +133,7 @@ CREATE TABLE `lancto` (
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,17 +157,17 @@ CREATE TABLE `lanctoitens` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`IdLancto`,`DtVencto`),
   UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `planejado`
+-- Table structure for table `saldo`
 --
 
-DROP TABLE IF EXISTS `planejado`;
+DROP TABLE IF EXISTS `saldo`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `planejado` (
+CREATE TABLE `saldo` (
   `Data` date NOT NULL,
   `Valor` decimal(15,2) NOT NULL DEFAULT '0.00',
   PRIMARY KEY (`Data`)
@@ -189,7 +189,7 @@ CREATE TABLE `tipoconta` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`Id`),
   UNIQUE KEY `ui_tipoconta_nm` (`Descricao`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -250,23 +250,26 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`angelo`@`localhost` PROCEDURE `CloseLancto`(
   IN p_Id INT,
-  IN p_IdParcela INT,
+  IN p_Parcela INT,
   IN p_DtPagto DATETIME,
   IN p_VlAcrescimo DECIMAL(15,2),
   IN p_VlDesconto DECIMAL(15,2)
 )
 BEGIN
   DECLARE v_VlLancto DECIMAL(15,2);
+  DECLARE v_p DECIMAL(15,2);
+  DECLARE v_VlTotal DECIMAL(15,2);
+  DECLARE v_DtVencto DATE;
 
   IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id) THEN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Lançamento não existe';
   END IF;
   
-  SELECT v_VlLancto INTO v_VlLancto
+  SELECT VlLancto, DtVencto INTO v_VlLancto, v_DtVencto
   FROM `lanctoitens`
   WHERE `IdLancto` = p_Id
-    AND `Parcela` = p_IdParcela;
+  AND `Parcela` = p_Parcela;
 
   IF FOUND_ROWS() = 0 THEN
     SIGNAL SQLSTATE '45000'
@@ -290,7 +293,65 @@ BEGIN
       `FlPago` = 1,
       `DtAlteracao` = CURRENT_TIMESTAMP
   WHERE `IdLancto` = p_Id
-    AND `Parcela` = p_IdParcela;
+  AND `Parcela` = p_Parcela;
+
+  UPDATE `saldo`
+  SET `Valor` = `Valor` - (p_VlAcrescimo - p_VlDesconto)
+  WHERE `Data` >= v_DtVencto;
+    
+  -- Datas diferentes; ajusta saldos
+  IF v_DtVencto <> p_DtPagto THEN
+    UPDATE `saldo`
+    SET `Valor` = `Valor` + (v_VlLancto + p_VlAcrescimo - p_VlDesconto)
+    WHERE `Data` >= v_DtVencto;
+
+    -- Deleta o registro se o saldo for igual a zero
+    DELETE FROM `saldo`
+    WHERE `Data` = v_DtVencto
+    AND `Valor` = 0;
+
+    -- Se não existir o registro de saldo na nova data, cria
+    IF NOT EXISTS (SELECT 1 FROM `saldo` WHERE `Data` = p_DtPagto) THEN
+      SET v_p = 0;
+
+      -- Obtém o saldo da data anterior
+      SELECT `Valor`
+      INTO v_p
+      FROM `saldo`
+      WHERE `Data` < p_DtPagto
+      ORDER BY `Data` DESC
+      LIMIT 1;
+
+      -- Adiciona-se o valor anterior, para não ajustar errado logo abaixo
+      INSERT INTO `saldo` (`Data`, `Valor`)
+      VALUES (p_DtPagto, COALESCE(v_p, 0));
+    END IF;
+
+    UPDATE `saldo`
+    SET `Valor` = `Valor` - (v_VlLancto + p_VlAcrescimo - p_VlDesconto)
+    WHERE `Data` >= p_DtPagto;
+  END IF;
+    
+  IF NOT EXISTS (SELECT 1 FROM `efetivado` WHERE `Data` = p_DtPagto) THEN
+    SET v_p = 0;
+
+    -- Obtém o saldo da data anterior
+    SELECT `Valor`
+    INTO v_p
+    FROM `efetivado`
+    WHERE `Data` < p_DtPagto
+    ORDER BY `Data` DESC
+    LIMIT 1;
+     
+    INSERT INTO `efetivado` (`Data`, `Valor`)
+    VALUES (p_DtPagto, COALESCE(v_p, 0));
+  END IF;
+
+  SET v_p = v_VlLancto + COALESCE(p_VlAcrescimo, 0) - COALESCE(p_VlDesconto, 0);
+
+  UPDATE `efetivado`
+  SET `Valor` = `Valor` - v_p
+  WHERE `Data` >= p_DtPagto;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -421,7 +482,7 @@ BEGIN
       LEAVE upd_loop;
     END IF;
 
-    UPDATE `planejado`
+    UPDATE `saldo`
     SET `Valor` = `Valor` - v_VlLancto * v_Signal
     WHERE `Data` >= v_DtVencto;
 
@@ -439,7 +500,7 @@ BEGIN
   SELECT MIN(`DtVencto`), MAX(`DtVencto`) INTO v_MinDate, v_MaxDate
   FROM `tmpitens`;
 
-  DELETE FROM `planejado`
+  DELETE FROM `saldo`
   WHERE `Data` BETWEEN v_MinDate AND v_MaxDate
   AND `Valor` = 0;
 
@@ -706,6 +767,7 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_DiasUteis INT,
   IN p_GerarParcela INT,
   IN p_DifFinal INT,
+  IN p_Baixa INT,
   OUT p_Id INT
 )
 BEGIN
@@ -720,6 +782,8 @@ BEGIN
   DECLARE v_p DECIMAL(15,2) DEFAULT 0;
   DECLARE v_r DECIMAL(15,2) DEFAULT 0;
   DECLARE v_Parcelas INT DEFAULT p_Parcelas;
+  DECLARE v_FlPago INT DEFAULT 0;
+  DECLARE v_DtVencto DATE;
   
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
   BEGIN
@@ -816,37 +880,37 @@ BEGIN
       END IF;
 	END IF;
 
-    IF p_Parcelas = 0 THEN -- Lançamento de crédito
-      INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`, `FlPago`, `DtPagto`)
-      VALUES (p_Id, 0, p_Descricao, v_DtReal, p_VlLancto, 1, v_DtReal);
-    ELSE
-      INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`)
-      VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto);
-	END IF;    
+    IF p_Parcelas = 0 OR (p_Parcelas = 1 AND p_Baixa = 1) THEN -- Lançamento de crédito OU Baixa automática
+      SET v_FlPago = 1;
+      SET v_DtVencto = v_DtReal;
+    END IF;
 
-    -- Se não existir um registro na data da parcela em "planejado", cria e inicializa o valor (saldo do dia anterior)
-    IF NOT EXISTS (SELECT 1 FROM `planejado` WHERE `Data` = v_DtReal) THEN
+    INSERT INTO `lanctoitens` (`IdLancto`, `Parcela`, `Descricao`, `DtVencto`, `VlLancto`, `FlPago`, `DtPagto`)
+    VALUES (p_Id, v_Parcela, p_Descricao, v_DtReal, p_VlLancto, v_FlPago, v_DtVencto);
+
+    -- Se não existir um registro na data da parcela em "saldo", cria e inicializa o valor (saldo do dia anterior)
+    IF NOT EXISTS (SELECT 1 FROM `saldo` WHERE `Data` = v_DtReal) THEN
       SET v_p = 0;
       
       -- Obtém o saldo da data anterior
       SELECT `Valor`
       INTO v_p
-      FROM `planejado`
+      FROM `saldo`
       WHERE `Data` < v_DtReal
       ORDER BY `Data` DESC
       LIMIT 1;
      
-      INSERT INTO `planejado` (`Data`, `Valor`)
+      INSERT INTO `saldo` (`Data`, `Valor`)
       VALUES (v_DtReal, COALESCE(v_p, 0));
     END IF;
 
     -- Ajusta o valor dos registros atual e futuro com os saldos
-    UPDATE `planejado`
+    UPDATE `saldo`
     SET Valor = Valor + p_VlLancto * CASE WHEN p_Parcelas = 0 THEN 1 ELSE -1 END
     WHERE `Data` >= v_DtReal;
     
     -- Se for um crédito, então atualiza também a tabela "efetivado"
-    IF p_Parcelas = 0 THEN
+    IF p_Parcelas = 0 OR (p_Parcelas = 1 AND p_Baixa = 1) THEN
       IF NOT EXISTS (SELECT 1 FROM `efetivado` WHERE `Data` = v_DtReal) THEN
         SET v_p = 0;
       
@@ -865,6 +929,8 @@ BEGIN
       UPDATE `efetivado`
       SET Valor = Valor + p_VlLancto
       WHERE `Data` >= v_DtReal;
+	ELSEIF p_Parcelas = 1 AND p_Baixa <> 0 THEN
+      CALL `CloseLancto` (p_Id, 1, v_DtReal, 0, 0);
     END IF;
 
     SET p_Parcelas = p_Parcelas - 1;
@@ -1043,26 +1109,90 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `ReopenLancto`(
   IN p_Parcela INT
 )
 BEGIN
+  DECLARE v_VlLancto DECIMAL(15,2);
+  DECLARE v_VlTotal DECIMAL(15,2);
+  DECLARE v_p DECIMAL(15,2);
+  DECLARE v_DtVencto DATE;
+  DECLARE v_DtPagto DATE;
+  DECLARE v_FlPago INT;
+  
   IF NOT (SELECT 1 FROM `lancto` WHERE `Id` = p_Id) THEN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Lançamento não existe';
   END IF;
 
-  IF NOT (SELECT 1 FROM `lanctoitens` WHERE `IdLancto` = p_Id AND `Parcela` = p_Parcela) THEN
+  SELECT VlLancto, VlTotal, DtVencto, DtPagto, FlPago INTO v_VlLancto, v_VlTotal, v_DtVencto, v_DtPagto, v_FlPago
+  FROM `lanctoitens`
+  WHERE `IdLancto` = p_Id
+  AND `Parcela` = p_Parcela;
+
+  IF FOUND_ROWS() = 0 THEN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Lançamento não existe';
   END IF;
 
-  IF NOT (SELECT 1 FROM `lanctoitens` WHERE `IdLancto` = p_Id AND `Parcela` = p_Parcela AND FlPago = 1) THEN
+  IF v_FlPago <> 1 THEN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'Lançamento não está fechado';
   END IF;
 
   UPDATE `lanctoitens`
   SET `FlPago` = 0,
+      `VlAcrescimo` = 0,
+      `VlDesconto` = 0,
+      `DtPagto` = NULL,
       `DtAlteracao` = CURRENT_TIMESTAMP
   WHERE `IdLancto` = p_Id
-    AND `Parcela` = p_Parcela;
+  AND `Parcela` = p_Parcela;
+
+  UPDATE `efetivado`
+  SET `Valor` = `Valor` + v_VlTotal
+  WHERE `Data` >= v_DtPagto;
+  
+  DELETE FROM `efetivado`
+  WHERE `Data` = v_DtPagto
+  AND `Valor` = 0;
+
+  UPDATE `saldo`
+  SET `Valor` = `Valor` + (v_VlTotal - v_VlLancto)
+  WHERE `Data` >= v_DtPagto;
+  
+  DELETE FROM `saldo`
+  WHERE `Data` = v_DtPagto
+  AND `Valor` = 0;
+
+  -- Datas diferentes; ajusta saldos
+  IF v_DtPagto <> v_DtVencto THEN
+    UPDATE `saldo`
+    SET `Valor` = `Valor` + v_VlLancto
+    WHERE `Data` >= v_DtPagto;
+
+    -- Deleta o registro se o saldo for igual a zero
+    DELETE FROM `saldo`
+    WHERE `Data` = v_DtPagto
+    AND `Valor` = 0;
+
+    -- Se não existir o registro de saldo na nova data, cria
+    IF NOT EXISTS (SELECT 1 FROM `saldo` WHERE `Data` = v_DtVencto) THEN
+      SET v_p = 0;
+
+      -- Obtém o saldo da data anterior
+      SELECT `Valor`
+      INTO v_p
+      FROM `saldo`
+      WHERE `Data` < v_DtVencto
+      ORDER BY `Data` DESC
+      LIMIT 1;
+
+      -- Adiciona-se o valor anterior, para não ajustar errado logo abaixo
+      INSERT INTO `saldo` (`Data`, `Valor`)
+      VALUES (v_DtVencto, COALESCE(v_p, 0));
+    END IF;
+
+    UPDATE `saldo`
+    SET `Valor` = `Valor` - v_VlLancto
+    WHERE `Data` >= v_DtVencto;
+  END IF;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1125,17 +1255,30 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `UpdateLancto`(
 )
 BEGIN
   DECLARE v_FlPago INT;
-  DECLARE v_DtVencto DATE;
-  DECLARE v_VlLancto DECIMAL(15,2);
+  DECLARE v_Parcelas INT;
+  DECLARE v_DtVenctoAnt DATE;
+  DECLARE v_VlLanctoAnt DECIMAL(15,2);
   DECLARE v_Dif DECIMAL(15,2);
+  DECLARE v_p DECIMAL(15,2);
+
+  SELECT `Parcelas`
+  INTO v_Parcelas
+  FROM `lancto`
+  WHERE `Id` = p_IdLancto;
+
+  IF FOUND_ROWS() = 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Lançamento não existe';
+  END IF;
 
   SELECT `VlLancto`, `DtVencto`, `FlPago`
-  INTO v_VlLancto, v_DtVencto, v_FlPago
+  INTO v_VlLanctoAnt, v_DtVenctoAnt, v_FlPago
   FROM `lanctoitens`
   WHERE `IdLancto` = p_IdLancto
     AND `Parcela` = p_Parcela;
 
-  IF v_FlPago = 1 THEN
+  -- Análise somente para lançamentos de débito
+  IF v_FlPago = 1 AND v_Parcelas > 0 THEN
     SIGNAL SQLSTATE '42003'
     SET MESSAGE_TEXT = 'Lançamento já fechado.';
   END IF;
@@ -1148,19 +1291,106 @@ BEGIN
   WHERE `IdLancto` = p_IdLancto
     AND `Parcela` = p_Parcela;
 
-  IF p_flgUpdateAll <> 0 THEN
+  -- Só atualiza em registro de débito
+  IF v_Parcelas > 0 AND p_flgUpdateAll <> 0 THEN
     UPDATE `lanctoitens`
     SET `Descricao` = p_Descricao,
         `DtAlteracao` = CURRENT_TIMESTAMP
     WHERE `IdLancto` = p_IdLancto
     AND `Parcela` <> p_Parcela;
   END IF;
+
+  -- Valor diferente do anterior; ajusta saldo
+  IF v_VlLanctoAnt <> p_VlLancto THEN
+    SET v_Dif = (v_VlLanctoAnt - p_VlLancto) * CASE v_Parcelas WHEN 0 THEN 1 ELSE -1 END;
+
+    UPDATE `saldo`
+    SET `Valor` = `Valor` - v_Dif
+    WHERE `Data` >= v_DtVenctoAnt;
+
+    DELETE FROM `saldo`
+    WHERE `Data` = v_DtVenctoAnt
+    AND `Valor` = 0;
+
+    -- Ajustes de lançamentos de crédito
+    IF v_Parcelas = 0 THEN
+      UPDATE `efetivado`
+      SET `Valor` = `Valor` - v_Dif
+      WHERE `Data` >= v_DtVenctoAnt;
+
+      DELETE FROM `efetivado`
+      WHERE `Data` = v_DtVenctoAnt
+      AND `Valor` = 0;
+    END IF;
+  END IF;
   
-  IF v_VlLancto <> p_VlLancto THEN
-    SET v_Dif = v_VlLancto - p_VlLancto;
-    UPDATE `planejado`
-    SET `Valor` = `Valor` + v_Dif
-    WHERE `Data` >= v_DtVencto;
+  -- Datas diferentes; ajusta saldos
+  IF v_DtVenctoAnt <> p_DtVencto THEN
+    -- Ajusta o saldo da data em que o lançamento pertencia
+    -- Subtrai se o valor de crédito ou soma, se o valor é de débito
+    SET v_Dif = p_VlLancto * CASE v_Parcelas WHEN 0 THEN 1 ELSE -1 END;
+
+    UPDATE `saldo`
+    SET `Valor` = `Valor` - v_Dif
+    WHERE `Data` >= v_DtVenctoAnt;
+
+    -- Deleta o registro se o saldo for igual a zero
+    DELETE FROM `saldo`
+    WHERE `Data` = v_DtVenctoAnt
+    AND `Valor` = 0;
+
+    -- Se não existir o registro de saldo na nova data, cria
+    IF NOT EXISTS (SELECT 1 FROM `saldo` WHERE `Data` = p_DtVencto) THEN
+      SET v_p = 0;
+
+      -- Obtém o saldo da data anterior
+      SELECT `Valor`
+      INTO v_p
+      FROM `saldo`
+      WHERE `Data` < p_DtVencto
+      ORDER BY `Data` DESC
+      LIMIT 1;
+
+      -- Adiciona-se o valor anterior, para não ajustar errado logo abaixo
+      INSERT INTO `saldo` (`Data`, `Valor`)
+      VALUES (p_DtVencto, COALESCE(v_p, 0));
+    END IF;
+
+    UPDATE `saldo`
+    SET `Valor` = `Valor` + p_VlLancto * CASE v_Parcelas WHEN 0 THEN 1 ELSE -1 END
+    WHERE `Data` >= p_DtVencto;
+
+    IF v_Parcelas = 0 THEN
+      UPDATE `efetivado`
+      SET `Valor` = `Valor` - v_Dif
+      WHERE `Data` >= v_DtVenctoAnt;
+
+      -- Deleta o registro se o saldo for igual a zero
+      DELETE FROM `efetivado`
+      WHERE `Data` = v_DtVenctoAnt
+      AND `Valor` = 0;
+
+      -- Se não existir o registro de saldo na nova data, cria
+      IF NOT EXISTS (SELECT 1 FROM `efetivado` WHERE `Data` = p_DtVencto) THEN
+        SET v_p = 0;
+
+        -- Obtém o saldo da data anterior
+        SELECT `Valor`
+        INTO v_p
+        FROM `efetivado`
+        WHERE `Data` < p_DtVencto
+        ORDER BY `Data` DESC
+        LIMIT 1;
+
+        -- Adiciona-se o valor anterior, para não ajustar errado logo abaixo
+        INSERT INTO `efetivado` (`Data`, `Valor`)
+        VALUES (p_DtVencto, COALESCE(v_p, 0));
+      END IF;
+
+      UPDATE `efetivado`
+      SET `Valor` = `Valor` + p_VlLancto * CASE v_Parcelas WHEN 0 THEN 1 ELSE -1 END
+      WHERE `Data` >= p_DtVencto;
+    END IF;
   END IF;
 END ;;
 DELIMITER ;
@@ -1223,4 +1453,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-10  2:36:17
+-- Dump completed on 2024-06-14  3:04:53

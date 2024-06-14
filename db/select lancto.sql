@@ -1,5 +1,5 @@
 /*
-TRUNCATE TABLE `contas_dev`.`planejado`;
+TRUNCATE TABLE `contas_dev`.`saldo`;
 TRUNCATE TABLE `contas_dev`.`efetivado`;
 TRUNCATE TABLE `contas_dev`.`lanctoitens`;
 TRUNCATE TABLE `contas_dev`.`lancto`;
@@ -21,7 +21,8 @@ SELECT l.`Id`,
                  END
        END AS `DescrTipo`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,
        l.`DtLancto`, l.`TpVencto`, l.`FlgDiasUteis`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`,
-       li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`, li.`VlTotal`
+       li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,
+       li.`VlTotal` * CASE l.`Parcelas` WHEN 0 THEN 1 ELSE -1 END AS `VlTotal`
 FROM `contas_dev`.`lancto` l
 INNER JOIN `contas_dev`.`lanctoitens` li
 ON li.`IdLancto` = l.`Id`

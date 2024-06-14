@@ -248,6 +248,8 @@ export default function Lancto() {
       value = !lancto.flgGerarParcela;
     } else if (name == "flgDifFinal") {
       value = !lancto.flgDifFinal;
+    } else if (name == "flgBaixar") {
+      value = !lancto.flgBaixar;
     }
 
     setLancto({ ...lancto, [name]: value });
@@ -795,9 +797,33 @@ export default function Lancto() {
                   />
                 </div>
               </div>
+              {lancto.parcelas == 1 && (
+                <div className="col-4">
+                  <div className="form-group">
+                    <label htmlFor="flgBaixar" className="control-label">
+                      &nbsp;
+                    </label>
+                    <div className="form-control">
+                      <input
+                        type="checkbox"
+                        name="flgBaixar"
+                        id="flgBaixar"
+                        checked={lancto.flgBaixar}
+                        onChange={handleInputChange}
+                      />
+                      <label
+                        htmlFor="flgGerarParcela"
+                        className={`control-label ${styles.spanTipos}`}
+                      >
+                        Baixar automaticamente
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
               {lancto.parcelas > 1 && (
                 <>
-                  <div className="col-2">
+                  <div className="col-4">
                     <div className="form-group">
                       <label
                         htmlFor="flgGerarParcela"

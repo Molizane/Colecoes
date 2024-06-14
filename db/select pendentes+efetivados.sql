@@ -1,5 +1,5 @@
-SELECT 'P' AS tipo, p.* FROM contas_dev.planejado p
+SELECT 'Saldo' AS tipo, s.* FROM contas_dev.saldo s
 UNION ALL
-SELECT 'E' AS tipo, e.* FROM contas_dev.efetivado e
+SELECT 'Efetivado' AS tipo, e.* FROM contas_dev.efetivado e
 ORDER BY Data, tipo DESC
 ;

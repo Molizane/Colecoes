@@ -21,7 +21,7 @@ export function Header() {
                 className={styles.dashboard}
                 activeClassName={styles.activeDashboard}
               >
-                <a>Painel de Movimentação</a>
+                <a>&lt;&lt; Dashboard &gt;&gt;</a>
               </ActiveLink>
 
               <ActiveLink href="/tipoconta" activeClassName={styles.active}>

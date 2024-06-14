@@ -23,8 +23,8 @@ const Home = () => {
   useEffect(() => {
     //console.log('page_load');
     // Título da aba
-    // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Painel de Movimentação`;
-    document.title = "Painel de Movimentação";
+    // document.title = `Contas ${process.env.NEXT_PUBLIC_VERSION} - Dashboard`;
+    document.title = "Dashboard";
   }, []);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ const Home = () => {
         <div className="col-12">
           <div className={styles.titulo}>
             <div className={styles.titulo2}>
-              <h4>Painel de Movimentação</h4>
+              <h4>Dashboard</h4>
             </div>
           </div>
           <hr />

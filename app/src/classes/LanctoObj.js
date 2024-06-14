@@ -24,6 +24,7 @@ const Lancto_ = {
   flgUpdateAll: false,
   flgGerarParcela: false,
   flgDifFinal: true,
+  flgBaixar: false,
 };
 
 export default function LanctoObj() {
