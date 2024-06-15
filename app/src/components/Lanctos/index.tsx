@@ -9,7 +9,6 @@ import { strDate, strValue } from "../../functions/utils";
 
 interface LanctoProps {
   id: number;
-  idLote: number;
   tipo: string;
   descricao: string;
   parcelas: number;
@@ -31,7 +30,6 @@ interface LanctoProps {
 
 export default function Lancto({
   id,
-  idLote,
   tipo,
   descricao,
   parcelas,

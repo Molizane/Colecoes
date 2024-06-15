@@ -7,19 +7,23 @@ TRUNCATE TABLE `contas_dev`.`lancto`;
 
 SELECT l.`Id`,
        CASE WHEN l.Parcelas = 0
-            THEN 'Crédito'
-            ELSE CASE l.`TpVencto`
-                   WHEN 'S' THEN 'Semanal'
-                   WHEN 'Q' THEN 'Quinzenal'
-                   WHEN 'M' THEN 'Mensal'
-                   WHEN 'B' THEN 'Bimestral'
-                   WHEN 'T' THEN 'Trimestral'
-                   WHEN '4' THEN 'Quadrimestral'
-                   WHEN '6' THEN 'Semestral'
-                   WHEN 'A' THEN 'Anual'
-                   ELSE l.`TpVencto`
-                 END
-       END AS `DescrTipo`, l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,
+            THEN 'Entrada'
+            ELSE 'Saída'
+	   END AS 'Movimento',
+       CASE l.`TpVencto`
+           WHEN 'S' THEN 'Semanal'
+           WHEN 'Q' THEN 'Quinzenal'
+           WHEN 'M' THEN 'Mensal'
+           WHEN 'B' THEN 'Bimestral'
+           WHEN 'T' THEN 'Trimestral'
+           WHEN '4' THEN 'Quadrimestral'
+           WHEN '6' THEN 'Semestral'
+           WHEN 'A' THEN 'Anual'
+           WHEN 'U' THEN 'Único'
+           ELSE l.`TpVencto`
+       END AS `Tipo`,
+       l.`Parcelas`, li.`Parcela`, l.`IdConta`, c.`Descricao` AS `Conta`,
+       CONCAT(li.`Descricao`, CASE WHEN l.`Parcelas` > 1 THEN CONCAT(' (', li.`Parcela`, ' / ', l.`Parcelas`, ')') ELSE "" END) AS `Descricao`,
        l.`DtLancto`, l.`TpVencto`, l.`FlgDiasUteis`, li.`DtVencto`, li.`VlLancto`, li.`FlPago`,
        li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,
        li.`VlTotal` * CASE l.`Parcelas` WHEN 0 THEN 1 ELSE -1 END AS `VlTotal`

@@ -36,6 +36,8 @@ export default function Lancto() {
     { key: "A", value: "Anual" },
   ];
 
+  // { key: "U", value: "Único" }, -> Para lançamentos com baixa automática
+
   const tpsExclusao = [
     { key: "L", value: "Lançamento atual" },
     { key: "A", value: "Lançamento atual e anteriores" },
@@ -120,7 +122,7 @@ export default function Lancto() {
         filtrados = filtrados.filter(
           (reg) =>
             (
-              reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
+              reg.descricao.toLowerCase() + reg.descrParcelas.toLowerCase()
             ).indexOf(filtro.toLowerCase()) !== -1 ||
             (filtraConta &&
               reg.conta.toLowerCase().indexOf(filtro.toLowerCase()) !== -1)
@@ -627,7 +629,7 @@ export default function Lancto() {
                   )}
                   <div
                     className={descrColLen}
-                  >{`${lancto.descricao}${lancto.descrParcela}`}</div>
+                  >{`${lancto.descricao}${lancto.descrParcelas}`}</div>
                   <div className="col-2">{strDate(lancto.dtVencto)}</div>
                   <div className={`col-2 ${styles.vlLancto}`}>
                     {strValue(lancto.vlTotal)}
@@ -889,7 +891,7 @@ export default function Lancto() {
                   id="parcela"
                   type="text"
                   disabled
-                  value={lancto.descrParcela.replace("(", "").replace(")", "")}
+                  value={lancto.descrParcelas.replace("(", "").replace(")", "")}
                 />
               </div>
             </div>
@@ -1078,7 +1080,7 @@ export default function Lancto() {
                 id="descricao"
                 type="text"
                 disabled
-                value={`${lancto.descricao}${lancto.descrParcela}`}
+                value={`${lancto.descricao}${lancto.descrParcelas}`}
                 onChange={handleInputChange}
                 maxLength={100}
               />
@@ -1156,7 +1158,7 @@ export default function Lancto() {
                 id="parcela"
                 type="text"
                 disabled
-                value={lancto.descrParcela.replace("(", "").replace(")", "")}
+                value={lancto.descrParcelas.replace("(", "").replace(")", "")}
               />
             </div>
           </div>

@@ -7,7 +7,6 @@ export async function insert(lancto) {
   }
 
   try {
-    console.log(lancto.flgBaixar);
     const result = await db.query(
       "set @id=null; call InsertLancto(?,?,?,?,?,?,?,?,?,?,@id); select @id as id",
       [
@@ -26,7 +25,11 @@ export async function insert(lancto) {
 
     return { status: 0, msg: "ok", info: result[0][2][0] };
   } catch (err) {
-    console.log(err);
+    if (err.message) {
+      logger.info(`insert /Lancto - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`insert /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -49,6 +52,11 @@ export async function update(lancto) {
 
     return { status: 0, msg: "ok" };
   } catch (err) {
+    if (err.message) {
+      logger.info(`update /Lancto - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`update /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -70,6 +78,11 @@ export async function exclude(id, parcela, tipo) {
 
     return { status: 0, msg: "ok" };
   } catch (err) {
+    if (err.message) {
+      logger.info(`exclude /Lancto/${id}/${parcela}/${tipo} - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`exclude /Lancto/${id}/${parcela}/${tipo} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -90,6 +103,11 @@ export async function close(lancto) {
     ]);
     return { status: 0, msg: "ok" };
   } catch (err) {
+    if (err.message) {
+      logger.info(`close /Lancto/${lancto.id} - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`close /Lancto/${lancto.id} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -104,6 +122,13 @@ export async function reopen(lancto) {
     await db.query("call ReopenLancto(?,?)", [lancto.id, lancto.parcela]);
     return { status: 0, msg: "ok" };
   } catch (err) {
+    if (err.message) {
+      logger.info(
+        `reopen /Lancto/${lancto.id}/${lancto.parcela} - ${err.message}`
+      );
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(
       `reopen /Lancto/${lancto.id}/${lancto.parcela} - ${err.sqlMessage}`
     );
@@ -111,7 +136,7 @@ export async function reopen(lancto) {
   }
 }
 
-const selectSQL =
+const selectSQLLista =
   "SELECT {t} AS Tipo, l.`Id`, l.`IdConta`, c.`Descricao` AS `Conta`, li.`Descricao`,\n" +
   "       l.`tpVencto`, l.`FlgDiasUteis`, l.`Parcelas`, li.`Parcela`, li.`DtVencto`,\n" +
   "       li.`VlLancto`, li.`FlPago`, li.`DtPagto`, li.`VlAcrescimo`, li.`VlDesconto`,\n" +
@@ -143,20 +168,19 @@ function mapLancto(lancto) {
     idConta: lancto.IdConta,
     conta: lancto.Conta,
     descricao: lancto.Descricao,
-    idLote: lancto.Id,
     tpVencto: lancto.tpVencto,
     flgDiasUteis: lancto.FlgDiasUteis,
     parcelas: lancto.Parcelas,
     parcela: lancto.Parcela,
     dtVencto: strDateUS(lancto.DtVencto),
-    vlLancto: lancto.VlLancto,
+    vlLancto: parseFloat(lancto.VlLancto),
     flPago: lancto.FlPago != 0,
     dtPagto: strDateUS(lancto.DtPagto),
-    vlAcrescimo: lancto.VlAcrescimo,
-    vlDesconto: lancto.VlDesconto,
-    vlTotal: lancto.VlTotal,
+    vlAcrescimo: parseFloat(lancto.VlAcrescimo),
+    vlDesconto: parseFloat(lancto.VlDesconto),
+    vlTotal: parseFloat(lancto.VlTotal),
     descrTipo: lancto.DescrTipo,
-    descrParcela:
+    descrParcelas:
       lancto.Parcelas == 1 ? "" : ` (${lancto.Parcela}/${lancto.Parcelas})`,
   };
 }
@@ -173,12 +197,12 @@ export async function getAll(crit) {
 
     // Lançamentos de crédito
     if (crit === "C") {
-      sql = selectSQL
+      sql = selectSQLLista
         .replace("{t}", "0 AS `Status`, 'Crédito'")
         .replace("l.`Id`=?", "l.`Parcelas`=0");
     } else {
       if (crit === "4" || crit === "2") {
-        sql = selectSQL
+        sql = selectSQLLista
           .replace("{t}", "2 AS `Status`, 'A vencer'")
           .replace(
             "l.`Id`=?",
@@ -191,7 +215,7 @@ export async function getAll(crit) {
           sql += "\nUNION\n";
         }
 
-        sql += selectSQL
+        sql += selectSQLLista
           .replace("{t}", "1 AS `Status`, 'Vencendo'")
           .replace(
             "l.`Id`=?",
@@ -204,7 +228,7 @@ export async function getAll(crit) {
           sql += "\nUNION\n";
         }
 
-        sql += selectSQL
+        sql += selectSQLLista
           .replace("{t}", "0 AS `Status`, 'Vencido'")
           .replace(
             "l.`Id`=?",
@@ -217,7 +241,7 @@ export async function getAll(crit) {
           sql += "\nUNION\n";
         }
 
-        sql += selectSQL
+        sql += selectSQLLista
           .replace("{t}", "3 AS `Status`, 'Pago'")
           .replace("l.`Id`=?", "l.`Parcelas`>0 AND li.`FlPago`=1");
       }
@@ -232,6 +256,11 @@ export async function getAll(crit) {
       return mapLancto(result);
     });
   } catch (err) {
+    if (err.message) {
+      logger.info(`get /Lancto - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`get /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -239,7 +268,7 @@ export async function getAll(crit) {
 
 export async function getAllByCriter(crit) {
   try {
-    var sql = selectSQL + ""; // Para fazer uma cópia, e não criar um referência
+    var sql = selectSQLLista + ""; // Para fazer uma cópia, e não criar um referência
     const pars = [];
 
     if (!crit) {
@@ -284,6 +313,11 @@ export async function getAllByCriter(crit) {
       return mapLancto(result);
     });
   } catch (err) {
+    if (err.message) {
+      logger.info(`get /Lancto/${crit} - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`get /Lancto/${crit} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -298,10 +332,15 @@ export async function getByIdPai(id) {
     }
 
     try {
-      const [results, _] = await db.query(selectSQL, [id]);
+      const [results, _] = await db.query(selectSQLLista, [id]);
 
       return mapLancto(results[0]);
     } catch (err) {
+      if (err.message) {
+        logger.info(`get /Lancto/${id} - ${err.message}`);
+        return { status: -1, msg: err.message };
+      }
+
       logger.info(`get /Lancto/${id} - ${err.sqlMessage}`);
       return { status: err.sqlState, msg: err.sqlMessage };
     }
@@ -309,13 +348,18 @@ export async function getByIdPai(id) {
 
   try {
     const [results, _] = await db.query(
-      selectSQL.replace("WHERE l.`Id`=?", "")
+      selectSQLLista.replace("WHERE l.`Id`=?", "")
     );
 
     return results.map((result) => {
       return mapLancto(result);
     });
   } catch (err) {
+    if (err.message) {
+      logger.info(`get /Lancto - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`get /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -331,12 +375,17 @@ export async function getByIdParcela(id, parcela) {
 
     try {
       const [results, _] = await db.query(
-        selectSQL.replace("=?", "=? AND li.`Parcela`=?"),
+        selectSQLLista.replace("=?", "=? AND li.`Parcela`=?"),
         [id, parcela]
       );
 
       return mapLancto(results[0]);
     } catch (err) {
+      if (err.message) {
+        logger.info(`get /Lancto/${id} - ${err.message}`);
+        return { status: -1, msg: err.message };
+      }
+
       logger.info(`get /Lancto/${id} - ${err.sqlMessage}`);
       return { status: err.sqlState, msg: err.sqlMessage };
     }
@@ -344,13 +393,18 @@ export async function getByIdParcela(id, parcela) {
 
   try {
     const [results, _] = await db.query(
-      selectSQL.replace("WHERE l.`Id`=?\n", "")
+      selectSQLLista.replace("WHERE l.`Id`=?\n", "")
     );
 
     return results.map((result) => {
       return mapLancto(result);
     });
   } catch (err) {
+    if (err.message) {
+      logger.info(`get /Lancto - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`get /Lancto - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
@@ -373,42 +427,134 @@ export async function getByIdTipoConta(id) {
       return mapLancto(result);
     });
   } catch (err) {
+    if (err.message) {
+      logger.info(`get /Lancto/Tipo/${id} -${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
     logger.info(`get /Lancto/Tipo/${id} - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
 }
 
-export async function getSaldos(dtInicio, dtFim) {
+export async function getExtrato(ano, mes) {
   try {
-    const [planejado, pl] = await db.query(
-      "SELECT * FROM `planejado` WHERE `Data` BETWEEN ? AND ? ORDER BY `Data`",
+    const dtInicio = new Date(ano, mes - 1, 1)
+      .toLocaleString("lt-LT")
+      .substring(0, 10);
+
+    var dtFim = new Date(ano, mes, 0);
+    const ultDia = dtFim.getDate();
+    var dtFim = dtFim.toLocaleString("lt-LT").substring(0, 10);
+
+    var [saldoAnterior, lx] = await db.query(
+      "SELECT * FROM `saldo` WHERE `Data` = (SELECT MAX(`Data`) FROM `saldo` WHERE `Data` < ?)",
+      [dtInicio]
+    );
+
+    var saldoAnt = 0;
+
+    if (saldoAnterior.length == 0) {
+      saldoAnterior = { valor: 0 };
+    } else {
+      saldoAnterior = {
+        data: strDateUS(saldoAnterior[0].Data),
+        valor: parseFloat(saldoAnterior[0].Valor),
+      };
+
+      saldoAnt = saldoAnterior.valor;
+    }
+
+    var [saldoNegativo, lx] = await db.query(
+      "SELECT MIN(`Data`) AS `Data` FROM `saldo` WHERE `Valor` < 0"
+    );
+
+    if (saldoNegativo.length == 0) {
+      saldoNegativo = null;
+    } else {
+      saldoNegativo = strDateUS(saldoNegativo[0].Data);
+    }
+
+    var [saldos, lx] = await db.query(
+      "SELECT DAY(`Data`) AS `Dia`, `Valor` FROM `saldo` WHERE `Data` BETWEEN ? AND ? ORDER BY `Data`",
       [dtInicio, dtFim]
     );
 
-    const [planejados, psl] = await db.query(
-      "SELECT MAX(`Data`) AS MaxData, MIN(`Data`) As MinData FROM `planejado`",
+    var saldos2 = [];
+
+    saldos.map((s) => {
+      saldos2.push({ dia: s.Dia, valor: parseFloat(s.Valor) });
+    });
+
+    saldos = [];
+    var r;
+
+    for (var i = 1; i <= ultDia; i++) {
+      var ds = saldos2.find((s) => s.dia == i);
+      if (ds) {
+        r = { dia: i, valor: ds.valor };
+        saldoAnt = ds.valor;
+      } else {
+        r = { dia: i, valor: saldoAnt };
+      }
+
+      saldos.push(r);
+    }
+
+    var sql =
+      "SELECT l.`Id`, l.`Parcelas`, li.`Parcela`,\n" +
+      "       CASE WHEN l.`Parcelas` = 0 THEN 'Crédito' ELSE 'Débito' END AS 'Movimento',\n" +
+      "       CASE li.`FlPago` WHEN 1 THEN 'Baixado' ELSE 'Pendente' END AS `Status`,\n" +
+      "       CONCAT(li.`Descricao`, CASE WHEN l.`Parcelas` > 1 THEN CONCAT(' (', li.`Parcela`, ' / ', l.`Parcelas`, ')') ELSE '' END) AS `Descricao`,\n" +
+      "       li.`DtVencto`, li.`DtPagto`, li.`FlPago`, li.`VlLancto`,\n" +
+      "       li.`VlTotal` * CASE l.`Parcelas` WHEN 0 THEN 1 ELSE -1 END AS `VlTotal`\n" +
+      "FROM `lancto` l\n" +
+      "INNER JOIN `lanctoitens` li\n" +
+      "ON li.`IdLancto` = l.`Id`\n" +
+      "WHERE {*}\n" +
+      "ORDER BY COALESCE(li.`DtPagto`, li.`DtVencto`), l.`Id`, li.`Descricao`, li.`IdLancto`\n";
+
+    var [lanctos, lx] = await db.query(
+      sql.replace(
+        "{*}",
+        "COALESCE(li.`DtPagto`, li.`DtVencto`) BETWEEN ? AND ?"
+      ),
       [dtInicio, dtFim]
     );
 
-    const [efetivado, ef] = await db.query(
-      "SELECT * FROM `efetivado` WHERE `Data` BETWEEN ? AND ? ORDER BY `Data`",
+    lanctos = lanctos.map((lancto) => {
+      return mapLancto(lancto);
+    });
+
+    var [pendentes, lx] = await db.query(
+      sql.replace(
+        "{*}",
+        "li.`FlPago` = 0 AND (li.`DtVencto` < ? OR li.`DtVencto` BETWEEN ? AND CURRENT_DATE)"
+      ),
       [dtInicio, dtFim]
     );
 
-    const [efetivados, efl] = await db.query(
-      "SELECT MAX(`Data`) AS MaxData, MIN(`Data`) As MinData FROM `efetivado`",
-      [dtInicio, dtFim]
-    );
+    pendentes = pendentes.map((pendente) => {
+      return mapLancto(pendente);
+    });
 
-    const saldos = {
-      planejado,
-      planejados: planejados[0],
-      efetivado,
-      efetivados: efetivados[0],
+    const retorno = {
+      intervalo: { ano: parseInt(ano), mes: parseInt(mes), dtInicio, dtFim },
+      saldoNegativo,
+      saldoAnterior,
+      saldos,
+      lanctos,
+      pendentes,
     };
-    return saldos;
+
+    return retorno;
   } catch (err) {
-    logger.info(`get /Lancto/Tipo/${id} - ${err.sqlMessage}`);
+    if (err.message) {
+      logger.info(`get /Lancto/getSaldos - ${err.message}`);
+      return { status: -1, msg: err.message };
+    }
+
+    logger.info(`get /Lancto/getSaldos - ${err.sqlMessage}`);
     return { status: err.sqlState, msg: err.sqlMessage };
   }
 }

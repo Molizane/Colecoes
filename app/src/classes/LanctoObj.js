@@ -1,6 +1,5 @@
 const Lancto_ = {
   id: null,
-  idLote: 0,
   status: "",
   tipo: "",
   descricao: "",
@@ -20,7 +19,7 @@ const Lancto_ = {
   vlDesconto: 0.0,
   vlTotal: 0.0,
   descrTipo: "",
-  descrParcela: "",
+  descrParcelas: "",
   flgUpdateAll: false,
   flgGerarParcela: false,
   flgDifFinal: true,

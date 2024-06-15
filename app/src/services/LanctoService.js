@@ -49,7 +49,7 @@ const getAll = async (crit) => {
   }
 };
 
-const get = async (id) => {
+const getById = async (id) => {
   try {
     return await http.get(`/lancto/${id}`);
   } catch (ex) {
@@ -57,17 +57,25 @@ const get = async (id) => {
   }
 };
 
-const getSaldos = async (dtInicio, dtFim) => {
+const getSaldos = async (ano, mes) => {
   try {
-    console.log("dtInicio", dtInicio);
-    console.log("dtFim", dtFim);
+    console.log("dtInicio", ano);
+    console.log("dtFim", mes);
 
-    return await http.get(`/lancto/saldos/${dtInicio}/${dtFim}`);
+    return await http.get(`/lancto/saldo/${ano}/${mes}`);
   } catch (ex) {
     return trataErrosApi(ex);
   }
 };
 
-const exportedObject = { create, update, payment, reopen, remove, getAll, get };
+const exportedObject = {
+  create,
+  update,
+  payment,
+  reopen,
+  remove,
+  getAll,
+  getById,
+};
 
 export default exportedObject;

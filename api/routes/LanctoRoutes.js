@@ -9,7 +9,7 @@ import {
   getByIdPai,
   getByIdParcela,
   getByIdTipoConta,
-  getSaldos,
+  getExtrato,
 } from "../db/LanctoDb.js";
 
 const router = express.Router();
@@ -138,9 +138,9 @@ router.get("/pai/:id?", async (req, res, next) => {
   }
 });
 
-router.get("/saldos/:dtInicio/:dtFim", async (req, res, next) => {
+router.get("/saldos/:ano/:mes", async (req, res, next) => {
   try {
-    const result = await getSaldos(req.params.dtInicio, req.params.dtFim);
+    const result = await getExtrato(req.params.ano, req.params.mes);
 
     if (result.status) {
       res.status(500).send(result);

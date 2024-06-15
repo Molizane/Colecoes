@@ -159,7 +159,7 @@ export default function Credito() {
       var regs = regs.filter(
         (reg) =>
           (
-            reg.descricao.toLowerCase() + reg.descrParcela.toLowerCase()
+            reg.descricao.toLowerCase() + reg.descrParcelas.toLowerCase()
           ).indexOf(filtro.toLowerCase()) !== -1
       );
 

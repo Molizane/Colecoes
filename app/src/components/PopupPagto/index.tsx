@@ -117,7 +117,7 @@ export default function PopupPagto({
               id="parcela"
               type="text"
               disabled
-              value={lancto.descrParcela.replace("(", "").replace(")", "")}
+              value={lancto.descrParcelas.replace("(", "").replace(")", "")}
             />
           </div>
         </div>
