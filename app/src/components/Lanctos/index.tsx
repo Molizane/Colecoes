@@ -9,54 +9,32 @@ import { strDate, strValue } from "../../functions/utils";
 
 interface LanctoProps {
   id: number;
-  tipo: string;
-  descricao: string;
-  parcelas: number;
   parcela: number;
+  descricao: string;
   valor: number;
-  desconto: number;
-  acrescimo: number;
   dataVencto: Date;
+  dataPagto?: Date;
   color?: string;
   bgColor?: string;
   bdColor?: string;
-  editColor?: string;
-  bgEditColor?: string;
-  delColor?: string;
-  bgDelColor?: string;
   onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
 }
 
 export default function Lancto({
   id,
-  tipo,
-  descricao,
-  parcelas,
   parcela,
+  descricao,
   valor,
-  desconto,
-  acrescimo,
   dataVencto,
+  dataPagto,
   color,
   bgColor,
   bdColor,
-  editColor,
-  bgEditColor,
-  delColor,
-  bgDelColor,
   onEdit,
-  onDelete,
 }: LanctoProps) {
   const onEditClick = () => {
     if (onEdit) {
       onEdit(id);
-    }
-  };
-
-  const onDeleteClick = () => {
-    if (onDelete) {
-      onDelete(id);
     }
   };
 

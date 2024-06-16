@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import Card from '../../components/Card'
+import { Row } from "react-bootstrap";
+import Card from "../../components/Card";
 import CenteredModal from "../../components/CenteredModal";
 
-const Home = () => {
+const TstCard = () => {
   const [modalShow, setModalShow] = useState(false);
   const [modalDelShow, setModalDelShow] = useState(false);
 
@@ -73,6 +74,6 @@ const Home = () => {
       />
     </>
   );
-}
+};
 
-export default Home
+export default TstCard;

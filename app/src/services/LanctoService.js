@@ -57,12 +57,9 @@ const getById = async (id) => {
   }
 };
 
-const getSaldos = async (ano, mes) => {
+const getExtrato = async (ano, mes) => {
   try {
-    console.log("dtInicio", ano);
-    console.log("dtFim", mes);
-
-    return await http.get(`/lancto/saldo/${ano}/${mes}`);
+    return await http.get(`/lancto/extrato/${ano}/${mes}`);
   } catch (ex) {
     return trataErrosApi(ex);
   }
@@ -76,6 +73,7 @@ const exportedObject = {
   remove,
   getAll,
   getById,
+  getExtrato,
 };
 
 export default exportedObject;

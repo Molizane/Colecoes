@@ -133,7 +133,7 @@ CREATE TABLE `lancto` (
   `FlgDiasUteis` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`),
   KEY `fk_lancto_conta_idx` (`IdConta`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,7 +157,7 @@ CREATE TABLE `lanctoitens` (
   `DtAlteracao` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`IdLancto`,`DtVencto`),
   UNIQUE KEY `ui_lancoitens_parcela` (`IdLancto`,`Parcela`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Tabela das parcelas do lançamento';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -410,7 +410,8 @@ BEGIN
   DECLARE v_MinDate DATE;
   DECLARE v_MaxDate DATE;
   DECLARE v_Signal INT DEFAULT 1;
-
+  DECLARE v_Parcelas INT;
+  
   DECLARE crsr CURSOR FOR SELECT `DtVencto`, `VlLancto`, `FlPago` FROM `tmpitens` ORDER BY `DtVencto`;
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -431,6 +432,10 @@ BEGIN
   START TRANSACTION;
 
   DROP TEMPORARY TABLE IF EXISTS `tmpitens`;
+
+  SELECT `Parcelas` INTO v_Parcelas
+  FROM `lancto`
+  WHERE `Id` = p_Id;
   
   CREATE TEMPORARY TABLE `tmpitens`
   (
@@ -467,7 +472,7 @@ BEGIN
   END IF;
   
   -- Se não for lançamento de crédito, inverte o sinal
-  IF p_Parcela <> 0 THEN
+  IF v_Parcelas <> 0 THEN
     -- UPDATE `tmpitens` SET `VlLancto` = -`VlLancto`;
     SET v_Signal = -1;
   END IF;
@@ -763,7 +768,7 @@ CREATE DEFINER=`angelo`@`localhost` PROCEDURE `InsertLancto`(
   IN p_VlLancto DECIMAL(15,2),
   IN p_DtVencto DATE,
   IN p_Parcelas INT, -- número de registros a serem criados no lote
-  IN p_Intervalo CHAR(1), -- (S)emanal, (Q)uinzenal, (M)ensal, (B)imestral, (T)rimestral, (4) Quadrimestral, (6) Semestral, (A)nual
+  IN p_Intervalo CHAR(1), -- (U)nico, (S)emanal, (Q)uinzenal, (M)ensal, (B)imestral, (T)rimestral, (4) Quadrimestral, (6) Semestral, (A)nual
   IN p_DiasUteis INT,
   IN p_GerarParcela INT,
   IN p_DifFinal INT,
@@ -829,7 +834,7 @@ BEGIN
     SET p_Parcelas = 1;
   END IF;
 
-  IF p_Parcelas = 0 THEN -- Lançamento de crédito
+  IF p_Parcelas IN (0, 1) THEN -- Lançamento de crédito ou de débito baixa automática
     SET p_Intervalo = 'U'; -- Único
     SET p_DiasUteis = 0; -- Ajuste para conformidade
   ELSEIF p_Intervalo NOT IN ('S', 'Q', 'M', 'B', 'T', '4', '6', 'A') THEN
@@ -1453,4 +1458,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-14  3:04:53
+-- Dump completed on 2024-06-15 23:40:33

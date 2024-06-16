@@ -138,7 +138,7 @@ router.get("/pai/:id?", async (req, res, next) => {
   }
 });
 
-router.get("/saldos/:ano/:mes", async (req, res, next) => {
+router.get("/extrato/:ano/:mes", async (req, res, next) => {
   try {
     const result = await getExtrato(req.params.ano, req.params.mes);
 

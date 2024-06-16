@@ -34,9 +34,9 @@ export default function Lancto() {
     { key: "4", value: "Quadrimestral" },
     { key: "6", value: "Semestral" },
     { key: "A", value: "Anual" },
+    // { key: "U", value: "Único" }, -> Para lançamentos com baixa automática (não aparece no combo)
   ];
 
-  // { key: "U", value: "Único" }, -> Para lançamentos com baixa automática
 
   const tpsExclusao = [
     { key: "L", value: "Lançamento atual" },

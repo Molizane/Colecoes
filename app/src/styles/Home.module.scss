@@ -16,10 +16,104 @@
   justify-content: flex-start;
 }
 
-.vencido{
+.titulo3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px;
+  width: 100%;
+}
+
+.vencido {
+  color: red;
+}
+
+.vencendo {
+  color: yellow;
+}
+
+.calendario {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.quadr {
+  border: 1px solid silver;
+  border-radius: 5px;
+  height: 37%;
+  box-shadow: 1px 1px;
+  // margin-top: 30px;
+  padding: 10px;
+   overflow: scroll;
+   overflow-x: unset;
+}
+
+// .quadr2 {
+//   display: flex;
+//   flex-direction: row;
+//   // border: 1px solid silver;
+//   // border-radius: 5px;
+//   padding: 5px;
+//   height: 92%;
+//   overflow: scroll;
+//   overflow-x: unset;
+// }
+
+.moldura {
+  height: 61%;
+  border: 1px solid silver;
+}
+
+.cardMoldura {
+  border: 1px solid silver;
+  display: flex;
+  flex-direction: row;
+  // align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.cardLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-right: 10px;
+}
+
+.cardDataValor {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cardRight {
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content:  space-between;
+}
+
+.cardRight2 {
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content:  flex-start;
+}
+
+.atencao{
   color:red;
 }
 
-.vencendo{
-  color:yellow;
+.extra{
+  height:1120px;
 }

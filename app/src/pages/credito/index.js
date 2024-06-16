@@ -62,9 +62,6 @@ export default function Credito() {
       return 0;
     }
 
-    console.log('getTiposVencto');
-    console.log(response.data);
-
     if (response.data.length == 0) {
       const reg = {
         id: null,
@@ -90,10 +87,6 @@ export default function Credito() {
       erroPopup(idTipoConta);
       return false;
     }
-
-    console.log('getContas');
-    console.log(idTipoConta);
-    console.log(response.data);
 
     if (response.data.length == 0) {
       const reg = {

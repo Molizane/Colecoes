@@ -526,15 +526,49 @@ export async function getExtrato(ano, mes) {
       return mapLancto(lancto);
     });
 
-    var [pendentes, lx] = await db.query(
-      sql.replace(
-        "{*}",
-        "li.`FlPago` = 0 AND (li.`DtVencto` < ? OR li.`DtVencto` BETWEEN ? AND CURRENT_DATE)"
-      ),
-      [dtInicio, dtFim]
+    var [vencidos, lx] = await db.query(
+      sql.replace("{*}", "li.`FlPago` = 0 AND li.`DtVencto` < ?"),
+      [dtInicio]
     );
 
-    pendentes = pendentes.map((pendente) => {
+    vencidos = vencidos.map((pendente) => {
+      return mapLancto(pendente);
+    });
+
+    var [vencidosNoMes, lx] = await db.query(
+      sql.replace(
+        "{*}",
+        "li.`FlPago` = 0 AND ((LAST_DAY(CURRENT_DATE) <> LAST_DAY('" +
+          dtInicio +
+          "') AND li.`DtVencto` BETWEEN ? AND ?) " +
+          "OR (LAST_DAY(CURRENT_DATE) = LAST_DAY('" +
+          dtInicio +
+          "') AND li.`DtVencto` BETWEEN ? AND DATE_SUB(CURRENT_DATE, INTERVAL 1 DAY)))"
+      ),
+      [dtInicio, dtFim, dtInicio]
+    );
+
+    vencidosNoMes = vencidosNoMes.map((pendente) => {
+      return mapLancto(pendente);
+    });
+
+    var [vencendo, lx] = await db.query(
+      sql.replace("{*}", "li.`FlPago` = 0 AND li.`DtVencto` = CURRENT_DATE")
+    );
+
+    vencendo = vencendo.map((pendente) => {
+      return mapLancto(pendente);
+    });
+
+    var [vencendoNoMes, lx] = await db.query(
+      sql.replace(
+        "{*}",
+        "li.`FlPago` = 0 AND li.`DtVencto` BETWEEN DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY) AND LAST_DAY(CURRENT_DATE)",
+        [dtFim]
+      )
+    );
+
+    vencendoNoMes = vencendoNoMes.map((pendente) => {
       return mapLancto(pendente);
     });
 
@@ -544,7 +578,10 @@ export async function getExtrato(ano, mes) {
       saldoAnterior,
       saldos,
       lanctos,
-      pendentes,
+      vencidos,
+      vencidosNoMes,
+      vencendo,
+      vencendoNoMes,
     };
 
     return retorno;

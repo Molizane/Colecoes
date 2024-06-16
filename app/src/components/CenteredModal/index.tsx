@@ -5,26 +5,28 @@ import { BsHandThumbsUpFill } from "react-icons/bs";
 import { BsHandThumbsDownFill } from "react-icons/bs";
 import { BsFloppyFill } from "react-icons/bs";
 import { BsXCircleFill } from "react-icons/bs";
-import { AiOutlineClose } from "react-icons/ai";
+import { AiFillDollarCircle, AiOutlineClose } from "react-icons/ai";
 
 interface CenteredModalProps {
-    backdrop?: true | false | 'static'
-    titulo: string
-    corTitulo?: string
-    children: any;
-    conteudo: string;
-    corConteudo?: string;
-    tamanho?: 'sm' | 'lg' | 'xl';
-    thumbsUp?: boolean;
-    thumbsDown?: boolean;
-    floppy?: boolean;
-    eye?: boolean;
-    closeButton?: boolean;
-    cancel?: boolean;
-    show: boolean;
-    warning?: boolean;
-    onConfirm?: () => void;
-    onHide?: () => void;
+  backdrop?: true | false | "static";
+  titulo: string;
+  corTitulo?: string;
+  children: any;
+  conteudo: string;
+  corConteudo?: string;
+  tamanho?: "sm" | "lg" | "xl";
+  thumbsUp?: boolean;
+  thumbsDown?: boolean;
+  floppy?: boolean;
+  eye?: boolean;
+  closeButton?: boolean;
+  payButton?: boolean;
+  cancel?: boolean;
+  show: boolean;
+  warning?: boolean;
+  onConfirm?: () => void;
+  onHide?: () => void;
+  onExtraOpc?: () => void;
 }
 
 export default function CenteredModal({
@@ -36,6 +38,7 @@ export default function CenteredModal({
   corConteudo,
   tamanho,
   closeButton,
+  payButton,
   thumbsUp,
   thumbsDown,
   floppy,
@@ -45,6 +48,7 @@ export default function CenteredModal({
   warning,
   onConfirm,
   onHide,
+  onExtraOpc,
 }: CenteredModalProps) {
   if (!corTitulo) {
     corTitulo = "black";
@@ -62,7 +66,7 @@ export default function CenteredModal({
 
   return (
     <>
-      <style jsx>
+      <style>
         {`
           .corTitulo {
             color: ${corTitulo};
@@ -90,6 +94,11 @@ export default function CenteredModal({
           <span className="corConteudo">{children || conteudo}</span>
         </Modal.Body>
         <Modal.Footer>
+          {payButton && (
+            <Button variant="primary" onClick={onExtraOpc}>
+              <AiFillDollarCircle />
+            </Button>
+          )}
           {thumbsUp && (
             <Button variant="primary" onClick={onConfirm}>
               <BsHandThumbsUpFill />
